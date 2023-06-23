@@ -1,0 +1,8 @@
+crash-log.txt
+demo_env
+__pycache__
+dist
+build
+ginaconfig.xml
+upx.exe
+config.json

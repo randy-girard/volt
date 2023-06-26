@@ -3,8 +3,6 @@ import time
 from PySide6.QtWidgets import QApplication, QProgressBar, QSizePolicy, QWidget
 from PySide6.QtCore import Signal, Slot, QObject, Qt, QTimer, QPropertyAnimation
 
-from string import Template
-
 class Timer(QWidget):
     signal = Signal()
 
@@ -124,7 +122,8 @@ class Timer(QWidget):
 
             if self.trigger.timer_ending_play_sound_file:
                 path = self.trigger.timer_ending_sound_file_path
-                playsound(path, False)
+                if len(path) > 0:
+                    playsound(path, False)
 
     def notifyEnded(self):
         if self.trigger.notify_ended:
@@ -144,7 +143,8 @@ class Timer(QWidget):
 
             if self.trigger.timer_ended_play_sound_file:
                 path = self.trigger.timer_ended_sound_file_path
-                playsound(path, False)
+                if len(path) > 0:
+                    playsound(path, False)
 
 
     def get_label(self, timestamp):

@@ -191,6 +191,9 @@ class Trigger(QTreeWidgetItem):
         # Strip out the timestamp
         stripped_str = re.sub("^\[.*?\] ", "", text)
 
+        # Remove whitespace
+        stripped_str = stripped_str.strip()
+
         if len(self.timers) > 0:
             for ender in self.regex_engine_enders:
                 m = ender.match(stripped_str)
@@ -202,7 +205,7 @@ class Trigger(QTreeWidgetItem):
             m = self.regex_engine.match(stripped_str)
             if m:
                 name = self.timer_name
-                name = self.regex_engine.execute(name)
+                name = self.regex_engine.execute(name, matches=m)
 
                 if self.interrupt_speech:
                     self.speaker.stop()
@@ -210,10 +213,10 @@ class Trigger(QTreeWidgetItem):
                 if self.use_text_to_voice:
                     text_to_say = self.text_to_voice_text
                     if self.profiles_manager.current_profile:
-                        text_to_say = self.regex_engine.execute(text_to_say)
+                        text_to_say = self.regex_engine.execute(text_to_say, matches=m)
                     self.speaker.say(text_to_say)
 
-                if self.play_sound_file:
+                if self.play_sound_file and len(self.sound_file_path) > 0:
                     path = self.sound_file_path
                     playsound(path, False)
 
@@ -244,7 +247,7 @@ class Trigger(QTreeWidgetItem):
                     for overlay in self.text_overlays:
                         if overlay.data_model.name == category.text_overlay:
                             if self.use_text:
-                                overlay.addTextTrigger(self.regex_engine.execute(self.display_text), category=category)
+                                overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category)
 
     def removeTimer(self, timer):
         self.timers.remove(timer)

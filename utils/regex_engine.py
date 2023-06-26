@@ -23,7 +23,7 @@ class RegexEngine():
 
         # Fix for newer perl regex stuff
         text = text.replace("?<", "?P<")
-        print(text)
+
         self.expression = re.compile(text, re.IGNORECASE)
 
     def match(self, text):

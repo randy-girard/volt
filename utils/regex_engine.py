@@ -51,7 +51,7 @@ class RegexEngine():
                         text = text.replace(f"{{{key}}}", group_key or "")
                     else:
                         pass
-            else:
+            elif matches:
                 # Replace the regex regular match groups
                 for index, match in enumerate(matches.groups()):
                     text = text.replace(f"{{{index + 1}}}", match)

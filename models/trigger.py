@@ -182,10 +182,11 @@ class Trigger(QTreeWidgetItem):
         for trigger in self.timer_end_early_triggers:
             regex_engine = RegexEngine(self)
             text = trigger["text"]
-            if not trigger["use_regex"]:
-                text = text.replace("*", "\w+")
-            regex_engine.compile(text)
-            self.regex_engine_enders.append(regex_engine)
+            if len(text) > 0:
+                if not trigger["use_regex"]:
+                    text = text.replace("*", "\w+")
+                regex_engine.compile(text)
+                self.regex_engine_enders.append(regex_engine)
 
     def onLogUpdate(self, text):
         # Strip out the timestamp

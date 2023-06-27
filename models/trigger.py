@@ -168,6 +168,7 @@ class Trigger(QTreeWidgetItem):
         return hash
 
     def compileExpressions(self):
+        self.regex_engine_enders = []
         search_text = self.search_text
 
         if not self.use_regex:

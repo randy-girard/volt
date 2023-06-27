@@ -6,11 +6,12 @@ from PySide6.QtCore import Signal, Slot, QObject, Qt, QTimer, QPropertyAnimation
 class Timer(QWidget):
     signal = Signal()
 
-    def __init__(self, parent, label, duration, trigger=None, category=None):
+    def __init__(self, parent, label, duration, trigger=None, category=None, matches=None):
         super().__init__()
 
         self.trigger = trigger
         self.category = category
+        self.matches = matches
         self.active = True
         self.label = label
         self.parent = parent

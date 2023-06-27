@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 class TextTrigger(QLabel):
     signal = Signal()
 
-    def __init__(self, parent, label, category=None):
+    def __init__(self, parent, label, category=None, matches=None):
         super().__init__()
 
         self.active = True
@@ -16,6 +16,7 @@ class TextTrigger(QLabel):
         self.label = label
         self.parent = parent
         self.category = category
+        self.matches = matches
 
         if self.category:
             self.setStyleSheet(

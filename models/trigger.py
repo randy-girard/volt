@@ -243,13 +243,13 @@ class Trigger(QTreeWidgetItem):
                                         add_timer = False
 
                                 if add_timer:
-                                    timer = overlay.addTimer(name, self.duration, trigger=self, category=category)
+                                    timer = overlay.addTimer(name, self.duration, trigger=self, category=category, matches=m)
                                     self.timers.append(timer)
 
                     for overlay in self.text_overlays:
                         if overlay.data_model.name == category.text_overlay:
                             if self.use_text:
-                                overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category)
+                                overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category, matches=m)
 
     def removeTimer(self, timer):
         self.timers.remove(timer)

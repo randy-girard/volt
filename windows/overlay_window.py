@@ -100,15 +100,15 @@ class OverlayWindow(FramelessWindowManager):
         else:
             self.setVisible(False)
 
-    def addTimer(self, text, duration, trigger=None, category=None):
-        timer = Timer(self, text, duration, trigger=trigger, category=category)
+    def addTimer(self, text, duration, trigger=None, category=None, matches=None):
+        timer = Timer(self, text, duration, trigger=trigger, category=category, matches=matches)
         self.layout.addWidget(timer)
         self.triggers.append(timer)
 
         return timer
 
-    def addTextTrigger(self, text, category=None):
-        text_trigger = TextTrigger(self, text, category=category)
+    def addTextTrigger(self, text, category=None, matches=None):
+        text_trigger = TextTrigger(self, text, category=category, matches=matches)
         self.layout.addWidget(text_trigger)
         self.triggers.append(text_trigger)
 

@@ -489,6 +489,8 @@ class TriggerWindow(QWidget):
 
         self._trigger.compileExpressions()
 
+        self._parent._parent._parent.log_signal.connect(self._trigger.onLogUpdate)
+
         self.destroy()
 
     def cancelTrigger(self):

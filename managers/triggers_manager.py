@@ -176,6 +176,7 @@ class TriggersManager(QWidget):
             checked_count = 0
             partial_count = 0
             group_count = 0
+            trigger_count = 0
             child_count = parent.childCount()
             for i in range(child_count):
                 child = parent.child(i)
@@ -186,8 +187,10 @@ class TriggersManager(QWidget):
                         checked_count += 1
                     elif state == Qt.CheckState.PartiallyChecked:
                         partial_count += 1
+                if type(child) is Trigger:
+                    trigger_count += 1
 
-            if checked_count + partial_count == 0:
+            if checked_count + partial_count == 0 and trigger_count == 0:
                 parent.setCheckState(column, Qt.CheckState.Unchecked)
             elif checked_count == group_count:
                 parent.setCheckState(column, Qt.CheckState.Checked)

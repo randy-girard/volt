@@ -43,7 +43,14 @@ class TriggerWindow(QWidget):
         self._parent = parent
         self.category_list = self._parent._parent._parent.categories_manager.category_list
         self._trigger_group = trigger_group
-        self._trigger = trigger or Trigger()
+        self._trigger = None
+        self._is_new = True
+
+        if trigger:
+            self._trigger = trigger
+            self._is_new = False
+        else:
+            self._trigger = Trigger()
 
         geo = self.geometry()
         geo.moveCenter(self.screen().availableGeometry().center())
@@ -482,14 +489,15 @@ class TriggerWindow(QWidget):
             }
             self._trigger.timer_end_early_triggers.append(item)
 
-        if self._trigger_group:
-            self._trigger_group.addChild(self._trigger)
-        else:
-            self._parent.trigger_list.addTopLevelItem(self._trigger)
+
+        if self._is_new:
+            if self._trigger_group and self._trigger_gorup:
+                self._trigger_group.addChild(self._trigger)
+            else:
+                self._parent.trigger_list.addTopLevelItem(self._trigger)
+            self._parent._parent._parent.log_signal.connect(self._trigger.onLogUpdate)
 
         self._trigger.compileExpressions()
-
-        self._parent._parent._parent.log_signal.connect(self._trigger.onLogUpdate)
 
         self.destroy()
 

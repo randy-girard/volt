@@ -1,8 +1,10 @@
+import sys
+
 from functools import partial
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QToolBar, QToolButton, QMenu
 from PySide6.QtCore import Signal, Slot, Qt
-from PySide6.QtGui import QStandardItemModel
+from PySide6.QtGui import QStandardItemModel, QAction
 
 from windows import overlay_window
 
@@ -22,6 +24,7 @@ class OverlaysManager(QWidget):
         self.overlay_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         self.overlay_timers_layout = QHBoxLayout()
         self.overlay_timers_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+
         self.overlay_text_layout = QHBoxLayout()
         self.overlay_text_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.overlay_layout.addLayout(self.overlay_timers_layout)
@@ -59,8 +62,55 @@ class OverlaysManager(QWidget):
 
         if overlay.data_model.type == "Timer":
             self._parent.categories_manager.category_timer_overlays.addItem(overlay.data_model.name)
-            button = QPushButton(overlay.data_model.name)
+
+            button = QToolButton()
             button.clicked.connect(partial(self.onOverlayButtonClick, overlay))
+            button.setText(overlay.data_model.name)
+            button.setPopupMode(QToolButton.MenuButtonPopup)
+
+            if sys.platform == "darwin":
+                button.setStyleSheet("""
+                    QToolButton { /* all types of tool button */
+                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                       stop: 0 #d3dace, stop: 1 #FFFFFF);
+                        border: 1px solid gray;
+                        border-radius: 5px;
+                        margin-top: 1ex;
+                    }
+
+                    QToolButton[popupMode="1"] { /* only for MenuButtonPopup */
+                        padding-right: 20px; /* make way for the popup button */
+                    }
+
+                    QToolButton:pressed {
+                        background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                          stop: 0 #dadbde, stop: 1 #f6f7fa);
+                    }
+
+                    /* the subcontrols below are used only in the MenuButtonPopup mode */
+                    QToolButton::menu-button {
+                        border: 2px solid gray;
+                        border-top-right-radius: 6px;
+                        border-bottom-right-radius: 6px;
+                        /* 16px width + 4px for border = 20px allocated above */
+                        width: 16px;
+                    }
+
+                    QToolButton::menu-arrow {
+                        image: url(downarrow.png);
+                    }
+
+                    QToolButton::menu-arrow:open {
+                        top: 1px; left: 1px; /* shift it a bit */
+                    }
+                """)
+
+            menu = QMenu(overlay.data_model.name, button)
+            action = QAction("Recenter window", menu)
+            action.triggered.connect(partial(self.onRecentWindowClick, overlay))
+            menu.addAction(action)
+            button.setMenu(menu)
+
             overlay.setButton(button)
             self.overlay_timers_layout.addWidget(button)
             self.timer_overlays.append(overlay)
@@ -105,6 +155,14 @@ class OverlaysManager(QWidget):
             self.destroyOverlayWindow(overlay)
         for overlay in self.text_overlays.copy():
             self.destroyOverlayWindow(overlay)
+
+    def onRecentWindowClick(self, overlay):
+        overlay.setTransparency(False)
+        center = self._parent.screen().availableGeometry().center()
+        geo = overlay.frameGeometry()
+        geo.moveCenter(center)
+        overlay.move(geo.topLeft())
+
 
     def destroy(self):
         for overlay in self.timer_overlays:

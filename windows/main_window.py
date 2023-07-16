@@ -14,6 +14,7 @@ from managers.home_manager import HomeManager
 from managers.categories_manager import CategoriesManager
 from managers.overlays_manager import OverlaysManager
 from managers.config_manager import ConfigManager
+from managers.trigger_log_manager import TriggerLogManager
 
 class MainWindow(QWidget):
     log_signal = Signal(str)
@@ -39,6 +40,7 @@ class MainWindow(QWidget):
         self.triggers_manager = self.home_manager.triggers_manager
         self.categories_manager = CategoriesManager(self)
         self.overlays_manager = OverlaysManager(self)
+        self.trigger_log_manager = TriggerLogManager(self)
 
         self.main_layout.addWidget(self.profiles_manager.profile_list)
         self.main_layout.addWidget(self.triggers_manager.trigger_list)
@@ -63,11 +65,12 @@ class MainWindow(QWidget):
         self.tabs.addTab(self.home_manager.home_tab, "Home")
         self.tabs.addTab(self.overlays_manager.overlay_tab, "Overlays")
         self.tabs.addTab(self.categories_manager.category_tab, "Categories")
+        self.tabs.addTab(self.trigger_log_manager.tab, "Trigger Log")
         self.layout.addWidget(self.tabs)
 
 
     def onTabChange(self, index):
-        if index == 2: # Categories tab
+        if index == 2 or index == 3:
             self.main_widget.setVisible(False)
             self.tabs.setFixedHeight(570)
             self.setFixedHeight(600)

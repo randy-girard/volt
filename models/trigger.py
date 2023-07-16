@@ -1,6 +1,7 @@
 import re
 
 from playsound import playsound
+from datetime import datetime
 
 from PySide6.QtWidgets import QTreeWidgetItem
 from PySide6.QtCore import Signal, Slot, Qt
@@ -36,6 +37,7 @@ class Trigger(QTreeWidgetItem):
         self.timer_overlays = self.owner._parent.overlays_manager.timer_overlays
         self.text_overlays = self.owner._parent.overlays_manager.text_overlays
         self.profiles_manager = self.owner._parent.profiles_manager
+        self.trigger_log_manager = self.owner._parent.trigger_log_manager
 
         self.regex_engine = RegexEngine(self.profiles_manager.current_profile)
         self.regex_engine_enders = []
@@ -224,7 +226,7 @@ class Trigger(QTreeWidgetItem):
 
                 categories = self.category_list.findItems(self.category, Qt.MatchExactly)
                 for category in categories:
-                    if self.duration > 0 and name and len(name) > 0:
+                    if name and len(name) > 0:
                         for overlay in self.timer_overlays:
                             if overlay.data_model.name == category.timer_overlay:
                                 add_timer = True
@@ -244,12 +246,14 @@ class Trigger(QTreeWidgetItem):
 
                                 if add_timer:
                                     timer = overlay.addTimer(name, self.duration, trigger=self, category=category, matches=m)
+                                    self.trigger_log_manager.addItem(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), name, stripped_str)
                                     self.timers.append(timer)
 
                     for overlay in self.text_overlays:
                         if overlay.data_model.name == category.text_overlay:
                             if self.use_text:
                                 overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category, matches=m)
+                                self.trigger_log_manager.addItem(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), name, stripped_str)
 
     def removeTimer(self, timer):
         self.timers.remove(timer)

@@ -71,14 +71,23 @@ class Timer(QWidget):
     def onUpdate(self):
         done = False
         current_time = time.time() * 1000
-        ratio = (current_time - self.starttime) / (self.endtime - self.starttime)
+
+        if self.duration > 0:
+            ratio = (current_time - self.starttime) / (self.endtime - self.starttime)
+
         if self.trigger and self.trigger.timer_type == "Stopwatch (Count Up)":
-            done = ratio > 1
+            if self.duration > 0:
+                done = ratio > 1
+                delta = (ratio * (self.endtime - self.starttime))
+            else:
+                done = False
+                delta = (current_time - self.starttime)
+                ratio = 1
         else:
             ratio = 1 - ratio
+            delta = (ratio * (self.endtime - self.starttime))
             done = ratio < 0
 
-        delta = (ratio * (self.endtime - self.starttime))
 
         ts = self.strfdelta(delta, '%M:%S')
         self.pbar.setValue(int(ratio * 1000))

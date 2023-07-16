@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QApplication, QProgressBar, QSizePolicy, QLabel
 from PySide6.QtCore import Signal, Slot, QObject, Qt, QTimer
-from PySide6.QtGui import QPainter, QColor
+from PySide6.QtGui import QPainter, QColor, QFont
 
 from datetime import datetime, timedelta
 
@@ -32,6 +32,9 @@ class TextTrigger(QLabel):
                     "color: #ffff00;"
                 "}"
             )
+
+        font = QFont(self.parent.data_model.font, self.parent.data_model.font_size)
+        self.setFont(font)
 
         self.adjustSize()
         self.setText(label)

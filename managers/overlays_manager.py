@@ -74,6 +74,11 @@ class OverlaysManager(QWidget):
             action = QAction("Recenter window", menu)
             action.triggered.connect(partial(self.onRecentWindowClick, overlay))
             menu.addAction(action)
+
+            action2 = QAction("Remove window", menu)
+            action2.triggered.connect(partial(self.destroyOverlayWindow, overlay))
+            menu.addAction(action2)
+
             button.setMenu(menu)
 
             overlay.setButton(button)
@@ -103,7 +108,10 @@ class OverlaysManager(QWidget):
     def saveOverlayWindow(self, overlay):
         old_name = overlay.data_model.name
         overlay.data_model.name = overlay.overlay_name_input.text()
+        overlay.data_model.font_size = int(overlay.overlay_font_size_input.text())
+        overlay.data_model.font = overlay.overlay_font_input.currentFont().toString()
         overlay.button.setText(overlay.overlay_name_input.text())
+
         if overlay.data_model.type == "Timer":
             idx = self._parent.categories_manager.category_timer_overlays.findText(old_name)
             self._parent.categories_manager.category_timer_overlays.setItemText(idx, overlay.overlay_name_input.text())

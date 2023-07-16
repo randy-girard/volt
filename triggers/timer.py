@@ -2,6 +2,7 @@ import time
 
 from PySide6.QtWidgets import QApplication, QProgressBar, QSizePolicy, QWidget
 from PySide6.QtCore import Signal, Slot, QObject, Qt, QTimer, QPropertyAnimation
+from PySide6.QtGui import QFont
 
 class Timer(QWidget):
     signal = Signal()
@@ -37,7 +38,10 @@ class Timer(QWidget):
                 f"background: {self.category.timer_bar_color};"
             "}"
         )
+        font = QFont(self.parent.data_model.font, self.parent.data_model.font_size)
+        self.pbar.setFont(font)
         self.adjustSize()
+
 
         #self.timer = QPropertyAnimation(self.pbar, b"value", self)
         #self.timer.setDuration(self.duration * 1000)

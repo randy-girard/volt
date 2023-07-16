@@ -2,8 +2,9 @@ import sys
 import time
 from functools import partial
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QApplication
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QLineEdit, QPushButton, QApplication, QFontComboBox
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QFont
 
 from triggers.timer import Timer
 from triggers.text_trigger import TextTrigger
@@ -27,7 +28,9 @@ class OverlayWindow(FramelessWindowManager):
         self.type = type
 
         self.data_model = Overlay(self, name=config.get("name", f"Default"),
-                                        type=config.get("type", "Timer"))
+                                        type=config.get("type", "Timer"),
+                                        font=config.get("font", "Arial"),
+                                        font_size=config.get("font_size", 14))
 
         self.oldPos = self.pos()
 
@@ -53,18 +56,24 @@ class OverlayWindow(FramelessWindowManager):
 
         self.toolbar = QWidget()
         self.toolbar.setObjectName("toolBar")
-        self.toolbar.setFixedHeight(50)
-        self.toolbar_layout = QHBoxLayout(self.toolbar)
+        #self.toolbar.setFixedHeight(50)
+        self.toolbar_layout = QGridLayout(self.toolbar)
         self.toolbar_layout.setAlignment(Qt.AlignRight | Qt.AlignTop)
-        self.overlay_name_input = QLineEdit(self)
-        self.overlay_name_input.setText(self.data_model.name)
-        self.toolbar_layout.addWidget(self.overlay_name_input)
+
         self.save_button = QPushButton("Save")
         self.save_button.clicked.connect(partial(self._parent.saveOverlayWindow, self))
-        self.toolbar_layout.addWidget(self.save_button)
-        self.delete_button = QPushButton("Remove")
-        self.delete_button.clicked.connect(partial(self._parent.destroyOverlayWindow, self))
-        self.toolbar_layout.addWidget(self.delete_button)
+        self.toolbar_layout.addWidget(self.save_button, 0, 2)
+
+        self.overlay_name_input = QLineEdit(self)
+        self.overlay_name_input.setText(self.data_model.name)
+        self.toolbar_layout.addWidget(self.overlay_name_input, 1, 0)
+        self.overlay_font_input = QFontComboBox(self)
+        self.overlay_font_input.setCurrentFont(QFont(self.data_model.font))
+        self.toolbar_layout.addWidget(self.overlay_font_input, 1, 1)
+        self.overlay_font_size_input = QLineEdit(self)
+        self.overlay_font_size_input.setText(str(self.data_model.font_size))
+        self.toolbar_layout.addWidget(self.overlay_font_size_input, 1, 2)
+
         self.toolbar.setLayout(self.toolbar_layout)
         self.layout.addWidget(self.toolbar)
 

@@ -33,9 +33,7 @@ class TextTrigger(QLabel):
                 "}"
             )
 
-        font = QFont(self.parent.data_model.font, self.parent.data_model.font_size)
-        self.setFont(font)
-
+        self.updateFont()
         self.adjustSize()
         self.setText(label)
 
@@ -44,6 +42,11 @@ class TextTrigger(QLabel):
         self.timer = QTimer()
         self.timer.timeout.connect(self.onUpdateEmit)
         self.timer.start(100)
+
+
+    def updateFont(self):
+        font = QFont(self.parent.data_model.font, self.parent.data_model.font_size)
+        self.setFont(font)
 
     def onUpdateEmit(self):
         self.signal.emit()
@@ -59,10 +62,17 @@ class TextTrigger(QLabel):
                 self.active = False
                 self.destroy()
 
+    def removeFromLayout(self):
+        self.setVisible(False)
+        self.parent.layout.removeWidget(self)
+
+    def addToLayout(self):
+        self.parent.layout.addWidget(self)
+        self.setVisible(True)
+
     def destroy(self):
         self.timer.stop()
         self.parent.triggers.remove(self)
-        self.parent.layout.removeWidget(self)
+        self.removeFromLayout()
         self.setParent(None)
-        self.setVisible(False)
         self = None

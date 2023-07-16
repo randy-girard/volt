@@ -36,7 +36,7 @@ class TriggerEndEarlyTable(QTableWidget):
             self.setCurrentCell(row - 1, col)
 
 class TriggerWindow(QWidget):
-    def __init__(self, parent, trigger=None, trigger_group=None):
+    def __init__(self, parent, trigger=None, trigger_group=None, is_new=False):
         super(TriggerWindow, self).__init__()
 
         self.setWindowTitle("Trigger Editor")
@@ -44,11 +44,10 @@ class TriggerWindow(QWidget):
         self.category_list = self._parent._parent._parent.categories_manager.category_list
         self._trigger_group = trigger_group
         self._trigger = None
-        self._is_new = True
+        self._is_new = is_new
 
         if trigger:
             self._trigger = trigger
-            self._is_new = False
         else:
             self._trigger = Trigger()
 
@@ -491,7 +490,7 @@ class TriggerWindow(QWidget):
 
 
         if self._is_new:
-            if self._trigger_group and self._trigger_gorup:
+            if self._trigger_group:
                 self._trigger_group.addChild(self._trigger)
             else:
                 self._parent.trigger_list.addTopLevelItem(self._trigger)

@@ -1,6 +1,6 @@
 import time
 
-from PySide6.QtWidgets import QApplication, QProgressBar, QSizePolicy, QWidget
+from PySide6.QtWidgets import QApplication, QProgressBar, QSizePolicy, QWidget, QVBoxLayout
 from PySide6.QtCore import Signal, Slot, QObject, Qt, QTimer, QPropertyAnimation
 from PySide6.QtGui import QFont
 
@@ -17,8 +17,12 @@ class Timer(QWidget):
         self.label = label
         self.parent = parent
         self.duration = duration
+        self.layout = QVBoxLayout(self)
+        self.layout.setAlignment(Qt.AlignTop)
+        self.layout.setSpacing(1)
+        self.layout.setContentsMargins(0, 0, 0, 1);
 
-        self.pbar = QProgressBar(self)
+        self.pbar = QProgressBar()
         self.pbar.setMinimum(0)
         self.pbar.setMaximum(1000)
         self.restartTimer()
@@ -38,8 +42,7 @@ class Timer(QWidget):
                 f"background: {self.category.timer_bar_color};"
             "}"
         )
-        font = QFont(self.parent.data_model.font, self.parent.data_model.font_size)
-        self.pbar.setFont(font)
+        self.updateFont()
         self.adjustSize()
 
 
@@ -52,8 +55,12 @@ class Timer(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.onUpdate)
         self.timer.start(50)
+        self.layout.addWidget(self.pbar)
+        #self.parent.layout.addWidget(self.pbar)
 
-        self.parent.layout.addWidget(self.pbar)
+    def updateFont(self):
+        font = QFont(self.parent.data_model.font, self.parent.data_model.font_size)
+        self.pbar.setFont(font)
 
     def restartTimer(self):
         self.ending_notified = False
@@ -70,6 +77,12 @@ class Timer(QWidget):
 
     def onDoubleClick(self):
         self.destroy()
+
+    def sortValue(self):
+        if self.parent.data_model.sort_method == "Time Remaining":
+            return self.endtime - (time.time() * 1000)
+        else:
+            return self.starttime
 
     #def onUpdate(self, value):
     def onUpdate(self):
@@ -109,13 +122,20 @@ class Timer(QWidget):
                 self.parent.addTimer(self.label, self.duration, self.trigger)
             self.destroy()
 
+    def removeFromLayout(self):
+        self.pbar.setVisible(False)
+        self.pbar.setTextVisible(False)
+        self.parent.trigger_layout.removeWidget(self)
+
+    def addToLayout(self):
+        self.pbar.setVisible(True)
+        self.pbar.setTextVisible(True)
+        self.parent.trigger_layout.addWidget(self)
+
     def destroy(self):
         self.timer.stop()
         self.parent.triggers.remove(self)
-        self.pbar.setVisible(False)
-        self.pbar.setTextVisible(False)
-        self.parent.layout.removeWidget(self.pbar)
-        self.parent.layout.removeWidget(self)
+        self.removeFromLayout()
         self.trigger.removeTimer(self)
 
     def notifyEnding(self):

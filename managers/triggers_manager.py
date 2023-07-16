@@ -207,7 +207,7 @@ class TriggersManager(QWidget):
         if type(item) is TriggerGroup:
             trigger_group = item
 
-        self.editTriggerOrTriggerGroupWindow(Trigger(parent=self._parent), trigger_group)
+        self.editTriggerOrTriggerGroupWindow(Trigger(parent=self._parent), trigger_group, True)
 
     def editTriggerOrTriggerGroup(self):
         item = self.trigger_list.currentItem()
@@ -241,9 +241,9 @@ class TriggersManager(QWidget):
             current_item = self.trigger_list.currentItem()
         self.editTriggerOrTriggerGroupWindow(current_item)
 
-    def editTriggerOrTriggerGroupWindow(self, item, trigger_group=None):
+    def editTriggerOrTriggerGroupWindow(self, item, trigger_group=None, is_new=False):
         if type(item) is Trigger:
-            self.trigger_window = trigger_window.TriggerWindow(self, item, trigger_group)
+            self.trigger_window = trigger_window.TriggerWindow(self, item, trigger_group, is_new)
             self.trigger_window.show()
         else:
             self.trigger_group_window = trigger_group_window.TriggerGroupWindow(self, item, trigger_group)

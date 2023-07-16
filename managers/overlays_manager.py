@@ -4,7 +4,7 @@ from functools import partial
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QToolBar, QToolButton, QMenu
 from PySide6.QtCore import Signal, Slot, Qt
-from PySide6.QtGui import QStandardItemModel, QAction
+from PySide6.QtGui import QStandardItemModel, QAction, QFont
 
 from windows import overlay_window
 
@@ -110,7 +110,14 @@ class OverlaysManager(QWidget):
         overlay.data_model.name = overlay.overlay_name_input.text()
         overlay.data_model.font_size = int(overlay.overlay_font_size_input.text())
         overlay.data_model.font = overlay.overlay_font_input.currentFont().toString()
+        overlay.data_model.sort_method = overlay.overlay_sort_method_input.currentText()
         overlay.button.setText(overlay.overlay_name_input.text())
+
+        for trigger in overlay.triggers:
+            trigger.updateFont()
+
+        if overlay.data_model.type == "Timer":
+            self.sortTriggers(overlay)
 
         if overlay.data_model.type == "Timer":
             idx = self._parent.categories_manager.category_timer_overlays.findText(old_name)
@@ -119,6 +126,13 @@ class OverlaysManager(QWidget):
             idx = self._parent.categories_manager.category_text_overlays.findText(old_name)
             self._parent.categories_manager.category_text_overlays.setItemText(idx, overlay.overlay_name_input.text())
         overlay.toggleShow()
+
+
+    def sortTriggers(self, overlay):
+        for trigger in overlay.triggers:
+            trigger.removeFromLayout()
+        for trigger in sorted(overlay.triggers, key=lambda x: x.sortValue()):
+            trigger.addToLayout()
 
 
     def destroyOverlayWindow(self, overlay):

@@ -117,6 +117,14 @@ class ConfigManager(QWidget):
             self._parent.overlays_manager.clearOverlayWindows()
             for item in root.findall("./BehaviorGroups/Behavior"):
                 window = item.find("./WindowLayout/WINDOWPLACEMENT/normalPosition")
+                sort_method = item.find("SortMethod").text
+                if sort_method == "OrderTriggered":
+                    sort_method = "Order Triggered"
+                elif sort_method == "TimeRemaining":
+                    sort_method = "Time Remaining"
+                else:
+                    sort_method = "Order Triggered"
+
                 config = {
                     "name": item.find("Name").text,
                     "type": item.find("BehaviorType").text,
@@ -125,7 +133,8 @@ class ConfigManager(QWidget):
                     "width": int(window.find("Right").text) - int(window.find("Left").text),
                     "height": int(window.find("Bottom").text) - int(window.find("Top").text),
                     "font": item.find("FontName").text,
-                    "font_size": int(item.find("FontSize").text)
+                    "font_size": int(item.find("FontSize").text),
+                    "sort_method": sort_method
                 }
                 self._parent.overlays_manager.createOverlay(config)
 

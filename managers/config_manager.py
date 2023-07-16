@@ -53,6 +53,56 @@ class ConfigManager(QWidget):
             self._parent.categories_manager.load(json_object)
 
 
+    def importSpellsUsConfig(self):
+        dlg = QFileDialog()
+        dlg.setFileMode(QFileDialog.AnyFile)
+
+        if dlg.exec_():
+            filenames = dlg.selectedFiles()
+            filename = filenames[0]
+
+            root = TriggerGroup(group_id="9999999",
+                                name="Spells",
+                                comments="Import from spells_us.txt")
+            self._parent.triggers_manager.trigger_list.addTopLevelItem(root)
+
+            with open(filename) as spell_file:
+                for line in spell_file:
+                    values = line.strip().split('^')
+                    name = values[1]
+                    effect_text_you = values[6]
+                    effect_text_other = values[7]
+                    effect_text_worn_off = values[8]
+                    duration = int(values[17])
+
+                    node = Trigger(parent=self,
+                                   name=f"{name} - YOU",
+                                   timer_name=f"{name} (YOU)",
+                                   duration=duration,
+                                   search_text=effect_text_you,
+                                   use_regex=False,
+                                   category="Default",
+                                   timer_type="RestartTimer",
+                                   use_text=True,
+                                   display_text=f"{name} (YOU)",
+                                   use_text_to_voice=False,
+                                   text_to_voice_text="",
+                                   interrupt_speech=False,
+                                   play_sound_file=False,
+                                   sound_file_path="",
+                                   restart_timer_matches=False,
+                                   restart_timer_regardless=False,
+                                   timer_end_early_triggers=[
+                                       {
+                                           "text": effect_text_worn_off,
+                                           "use_regex": True
+                                       }
+                                   ])
+                    self._parent.log_signal.connect(node.onLogUpdate)
+                    root.addChild(node)
+
+
+
     def importGinaConfig(self):
         dlg = QFileDialog()
         dlg.setFileMode(QFileDialog.AnyFile)
@@ -74,6 +124,8 @@ class ConfigManager(QWidget):
                     "left": int(window.find("Left").text),
                     "width": int(window.find("Right").text) - int(window.find("Left").text),
                     "height": int(window.find("Bottom").text) - int(window.find("Top").text),
+                    "font": item.find("FontName").text,
+                    "font_size": int(item.find("FontSize").text)
                 }
                 self._parent.overlays_manager.createOverlay(config)
 

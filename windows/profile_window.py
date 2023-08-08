@@ -1,8 +1,11 @@
+import contextlib
+
 from PySide6.QtWidgets import QWidget, QGridLayout, QLineEdit, QPushButton, QFileDialog, QLabel
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
 
 from models.profile import Profile
+from models.trigger import Trigger
 
 class ProfileWindow(QWidget):
     def __init__(self, parent, profile=None):
@@ -59,6 +62,14 @@ class ProfileWindow(QWidget):
         self._profile.setName(self.name_input.text())
         self._profile.setLogFile(self.logfile_input.text())
         self._parent.profile_list.addItem(self._profile)
+
+        triggers = self._parent._parent.triggers_manager.trigger_list.findItems("*", Qt.MatchWrap | Qt.MatchWildcard | Qt.MatchRecursive);
+        for trigger in triggers:
+            if type(trigger) is Trigger:
+                with contextlib.suppress(RuntimeError):
+                    self._parent._parent._parent.log_signal.disconnect(trigger.onLogUpdate)
+                self._parent._parent._parent.log_signal.connect(trigger.onLogUpdate)
+
         self.destroy()
 
     def cancelProfile(self):

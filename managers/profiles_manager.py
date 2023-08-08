@@ -1,3 +1,5 @@
+import contextlib
+
 from PySide6.QtWidgets import QWidget, QPushButton, QListWidget
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
@@ -5,6 +7,7 @@ from PySide6.QtGui import QStandardItemModel
 from windows import profile_window
 
 from models.profile import Profile
+from models.trigger import Trigger
 from models.trigger_group import TriggerGroup
 
 class ProfilesManager(QWidget):
@@ -69,6 +72,12 @@ class ProfilesManager(QWidget):
         if len(self.current_profile.log_file) > 0:
             self._parent._parent.logreader.setLogFile(self.current_profile.log_file)
             self._parent._parent.logreader.start()
+            triggers = self._parent.triggers_manager.trigger_list.findItems("*", Qt.MatchWrap | Qt.MatchWildcard | Qt.MatchRecursive);
+            for trigger in triggers:
+                if type(trigger) is Trigger:
+                    with contextlib.suppress(RuntimeError):
+                        self._parent._parent.log_signal.disconnect(trigger.onLogUpdate)
+                    self._parent._parent.log_signal.connect(trigger.onLogUpdate)
 
     def editProfileWindow(self, item):
         current_item = self.profile_list.currentItem()

@@ -92,7 +92,7 @@ class OverlayWindow(FramelessWindowManager):
 
         self.setWidget(self.widget)
         self.setWidgetResizable(True)
-        self.base_window_flags = self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint
+        self.base_window_flags = self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool
 
         self.setWindowFlags(self.base_window_flags)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff);

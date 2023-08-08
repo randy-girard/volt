@@ -164,6 +164,7 @@ class OverlayWindow(FramelessWindowManager):
             self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, False)
             self.setCanManage(True)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, enabled)
+        self.setAttribute(Qt.WA_MacAlwaysShowToolWindow, True)        
         self.setStyle(enabled)
         self.widget.show()
         self.show()

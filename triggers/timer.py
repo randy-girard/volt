@@ -25,6 +25,7 @@ class Timer(QWidget):
         self.pbar = QProgressBar()
         self.pbar.setMinimum(0)
         self.pbar.setMaximum(1000)
+        self.pbar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.restartTimer()
         #self.pbar.valueChanged.connect(self.onUpdate)
         self.pbar.show()
@@ -32,7 +33,7 @@ class Timer(QWidget):
             "QProgressBar"
             "{"
                 f"color: {self.category.timer_font_color};"
-                "background-color: transparent;"
+                "background-color: rgba(0, 0, 0, 100);"
                 "border: 0;"
             "}"
 

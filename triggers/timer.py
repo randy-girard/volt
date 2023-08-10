@@ -89,6 +89,7 @@ class Timer(QWidget):
     def onUpdate(self):
         done = False
         current_time = time.time() * 1000
+        ratio = 1
 
         if self.duration > 0:
             ratio = (current_time - self.starttime) / (self.endtime - self.starttime)
@@ -104,7 +105,7 @@ class Timer(QWidget):
         else:
             ratio = 1 - ratio
             delta = (ratio * (self.endtime - self.starttime))
-            done = ratio < 0
+            done = ratio <= 0
 
 
         ts = self.strfdelta(delta, '%M:%S')

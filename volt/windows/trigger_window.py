@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QLineEdit, QCheckBox, QLabel
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel, QKeyEvent
 
-from models.trigger import Trigger
+from volt.models.trigger import Trigger
 
 class TriggerEndEarlyTable(QTableWidget):
     def __init__(self, rows, cols):

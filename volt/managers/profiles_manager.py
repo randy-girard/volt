@@ -4,11 +4,11 @@ from PySide6.QtWidgets import QWidget, QPushButton, QListWidget
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
 
-from windows import profile_window
+from volt.windows import profile_window
 
-from models.profile import Profile
-from models.trigger import Trigger
-from models.trigger_group import TriggerGroup
+from volt.models.profile import Profile
+from volt.models.trigger import Trigger
+from volt.models.trigger_group import TriggerGroup
 
 class ProfilesManager(QWidget):
     def __init__(self, parent):

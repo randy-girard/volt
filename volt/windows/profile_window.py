@@ -4,8 +4,8 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QLineEdit, QPushButton, QFil
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
 
-from models.profile import Profile
-from models.trigger import Trigger
+from volt.models.profile import Profile
+from volt.models.trigger import Trigger
 
 class ProfileWindow(QWidget):
     def __init__(self, parent, profile=None):

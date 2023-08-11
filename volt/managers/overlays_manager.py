@@ -6,9 +6,9 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QC
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel, QAction, QFont
 
-from windows import overlay_window
+from volt.windows import overlay_window
 
-from models.overlay import Overlay
+from volt.models.overlay import Overlay
 
 class OverlaysManager(QWidget):
     def __init__(self, parent):

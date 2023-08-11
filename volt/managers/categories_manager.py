@@ -2,9 +2,9 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QHBoxLayout, QPushButton, QL
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
 
-from utils.color_button import ColorButton
+from volt.utils.color_button import ColorButton
 
-from models.category import Category
+from volt.models.category import Category
 
 class CategoriesManager(QWidget):
     def __init__(self, parent):

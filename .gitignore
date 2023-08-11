@@ -6,3 +6,4 @@ build
 ginaconfig.xml
 upx.exe
 config.json
+.DS_Store

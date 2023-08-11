@@ -5,10 +5,10 @@ import xml.etree.ElementTree as ET
 
 from PySide6.QtWidgets import QWidget, QFileDialog
 
-from models.trigger_group import TriggerGroup
-from models.trigger import Trigger
-from models.category import Category
-from models.profile import Profile
+from volt.models.trigger_group import TriggerGroup
+from volt.models.trigger import Trigger
+from volt.models.category import Category
+from volt.models.profile import Profile
 
 class ConfigManager(QWidget):
     def __init__(self, parent):

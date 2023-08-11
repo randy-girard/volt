@@ -6,12 +6,12 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QLineEdit, QPus
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
 
-from triggers.timer import Timer
-from triggers.text_trigger import TextTrigger
+from volt.triggers.timer import Timer
+from volt.triggers.text_trigger import TextTrigger
 
-from utils.frameless_window_manager import FramelessWindowManager
+from volt.utils.frameless_window_manager import FramelessWindowManager
 
-from models.overlay import Overlay
+from volt.models.overlay import Overlay
 
 if sys.platform == "darwin":
     from AppKit import NSWorkspace
@@ -164,7 +164,7 @@ class OverlayWindow(FramelessWindowManager):
             self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, False)
             self.setCanManage(True)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, enabled)
-        self.setAttribute(Qt.WA_MacAlwaysShowToolWindow, True)        
+        self.setAttribute(Qt.WA_MacAlwaysShowToolWindow, True)
         self.setStyle(enabled)
         self.widget.show()
         self.show()

@@ -4,7 +4,7 @@ import signal
 import select
 import sys
 
-from utils.log_watcher import LogWatcher
+from volt.utils.log_watcher import LogWatcher
 
 from pubsub import pub
 from threading import Thread

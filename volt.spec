@@ -27,14 +27,15 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='main',
+          name='Volt',
+          icon='icon.png',
           strip=False,
           upx=True,
           console=False,
           runtime_tmpdir=None)
 
 app = BUNDLE(exe,
-         name='overlay.app',
-         icon=None,
+         name='Volt.app',
+         icon='icon.png',
          console=False,
          bundle_identifier=None)

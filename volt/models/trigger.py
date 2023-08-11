@@ -6,7 +6,7 @@ from datetime import datetime
 from PySide6.QtWidgets import QTreeWidgetItem
 from PySide6.QtCore import Signal, Slot, Qt
 
-from utils.regex_engine import RegexEngine
+from volt.utils.regex_engine import RegexEngine
 
 class Trigger(QTreeWidgetItem):
     def __init__(self, name="", timer_name="", search_text="", duration=0, use_regex=False,

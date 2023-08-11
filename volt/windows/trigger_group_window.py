@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QLineEdit, QLabel, QTextEdit
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
 
-from models.trigger_group import TriggerGroup
+from volt.models.trigger_group import TriggerGroup
 
 class TriggerGroupWindow(QWidget):
     def __init__(self, parent, trigger_group=None, parent_group=None):

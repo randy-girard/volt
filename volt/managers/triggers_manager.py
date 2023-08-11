@@ -2,11 +2,11 @@ from PySide6.QtWidgets import QWidget, QPushButton, QTreeWidget
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
 
-from windows import trigger_window
-from windows import trigger_group_window
+from volt.windows import trigger_window
+from volt.windows import trigger_group_window
 
-from models.trigger_group import TriggerGroup
-from models.trigger import Trigger
+from volt.models.trigger_group import TriggerGroup
+from volt.models.trigger import Trigger
 
 class TriggersManager(QWidget):
     def __init__(self, parent):

@@ -40,7 +40,6 @@ class LogReader():
 
     def callback(self, filename, lines):
         for line in lines:
-            print(line.strip("\n"))
             pub.sendMessage('log', text=line.strip("\n"))
 
     def init_tail_file(self, filename):

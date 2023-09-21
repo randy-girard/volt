@@ -156,7 +156,11 @@ class LogWatcher(object):
             return pickle.loads(self._volatile_checkpoints[checkpoint_filename])
         except KeyError:
             log.info("returning default checkpoint value")
-            return self._init_checkpoint
+            with self.open(str(fname)) as f:
+                portalocker.lock(f, portalocker.LOCK_SH)
+                f.seek(os.path.getsize(fname))  # EOF
+                end_offset = f.tell()
+                return self.get_checkpoint_tuple(fname, 0, end_offset)
 
     def save_checkpoint(self, fname, checkpoint):
         checkpoint_filename = self.make_checkpoint_path_from_fname(fname)
@@ -383,8 +387,8 @@ class LogWatcher(object):
                             log.info("trying to unwatch to read tail of rotated file")
                             self.unwatch(file, self.get_file_id(file.name))
                             return
-                        offset = 0
-                        out_offset = 0
+                        offset = file_size
+                        out_offset = file_size
 
                     log.debug("seek to offset: %s" % offset)
                     f.seek(offset)

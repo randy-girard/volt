@@ -58,5 +58,6 @@ class RegexEngine():
 
         if self.profile:
             text = text.replace("{C}", self.profile.name)
+            text = text.replace("{c}", self.profile.name)
 
         return text

@@ -5,3 +5,4 @@ pyobjc>=2.4; sys_platform == 'darwin'
 playsound==1.2.2
 portalocker
 shiboken6
+Pillow

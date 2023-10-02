@@ -7,4 +7,4 @@ pyenv exec pyinstaller ../volt.spec
 
 # Windows, from mac/linux
 wine python -m pip install -r requirements.txt
-wine pyinstaller ../volt.spec
+wine python -m PyInstaller ../volt.spec

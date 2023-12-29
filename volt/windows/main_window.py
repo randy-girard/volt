@@ -81,6 +81,7 @@ class MainWindow(QWidget):
             self.setFixedHeight(600)
 
     def destroy(self):
+        self.speaker.stop()
         self.logreader.stop()
         self.overlays_manager.destroy()
 

@@ -1,8 +1,9 @@
 PySide6==6.5.1.1
 sip
 pypubsub==4.0.3
-pyobjc>=2.4; sys_platform == 'darwin'
+pyobjc==8.0; sys_platform == 'darwin'
 playsound==1.2.2
 portalocker
 shiboken6
 Pillow
+pyttsx3

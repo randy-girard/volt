@@ -1,7 +1,7 @@
 import unittest
 
-from utils.regex_engine import RegexEngine
-from models.profile import Profile
+from volt.utils.regex_engine import RegexEngine
+from volt.models.profile import Profile
 
 class RegexEngineTest(unittest.TestCase):
     def test_ch(self):

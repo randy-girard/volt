@@ -1,7 +1,7 @@
 import re
 import sys
 
-from PySide6.QtWidgets import QWidget, QGridLayout, QLineEdit, QCheckBox, QLabel, QComboBox, QTabWidget, QHBoxLayout, QPushButton, QVBoxLayout, QGroupBox, QRadioButton, QFileDialog, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView
+from PySide6.QtWidgets import QApplication, QWidget, QGridLayout, QLineEdit, QCheckBox, QLabel, QComboBox, QTabWidget, QHBoxLayout, QPushButton, QVBoxLayout, QGroupBox, QRadioButton, QFileDialog, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel, QKeyEvent
 
@@ -494,7 +494,7 @@ class TriggerWindow(QWidget):
                 self._trigger_group.addChild(self._trigger)
             else:
                 self._parent.trigger_list.addTopLevelItem(self._trigger)
-            self._parent._parent._parent.log_signal.connect(self._trigger.onLogUpdate)
+            QApplication.instance()._signals["logreader"].new_line.connect(self._trigger.onLogUpdate)
 
         self._trigger.compileExpressions()
 

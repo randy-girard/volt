@@ -23,8 +23,15 @@ class Trigger(QTreeWidgetItem):
                        timer_ended_text_to_voice_text="", timer_ended_interrupt_speech=False,
                        timer_ended_play_sound_file=False, timer_ended_sound_file_path="",
                        timer_end_early_triggers=[],
-                       parent=None):
+                       parent=None,
+                       checked=Qt.CheckState.Unchecked):
+
+        checked = self.fromCheckState(checked)
+
         super().__init__()
+        self.setFlags(self.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+        self.setCheckState(0, checked)
+
         self.search_text = search_text
         self.use_regex = use_regex
         self.owner = parent
@@ -81,6 +88,28 @@ class Trigger(QTreeWidgetItem):
         self.timer_end_early_triggers = timer_end_early_triggers
 
         self.compileExpressions()
+
+    def isChecked(self):
+        return self.checkState(0) == Qt.CheckState.Checked
+
+    def fromCheckState(self, checkState):
+        if checkState == 0:
+            return Qt.CheckState.Unchecked
+        elif checkState == 1:
+            return Qt.CheckState.PartiallyChecked
+        elif checkState == 2:
+            return Qt.CheckState.Checked
+        else:
+            return checkState
+
+    def checkStateToInt(self, checkState):
+        if checkState == Qt.CheckState.Unchecked:
+            return 0
+        if checkState == Qt.CheckState.PartiallyChecked:
+            return 1
+        if checkState == Qt.CheckState.Checked:
+            return 2
+
 
     def setName(self, val):
         self.name = val
@@ -165,7 +194,8 @@ class Trigger(QTreeWidgetItem):
             "timer_ended_interrupt_speech": self.timer_ended_interrupt_speech,
             "timer_ended_play_sound_file": self.timer_ended_play_sound_file,
             "timer_ended_sound_file_path": self.timer_ended_sound_file_path,
-            "timer_end_early_triggers": self.timer_end_early_triggers
+            "timer_end_early_triggers": self.timer_end_early_triggers,
+            "checked": self.checkStateToInt(self.checkState(0))
         }
         return hash
 

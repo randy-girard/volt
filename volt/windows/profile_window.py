@@ -62,20 +62,6 @@ class ProfileWindow(QWidget):
         self._profile.setName(self.name_input.text())
         self._profile.setLogFile(self.logfile_input.text())
         self._parent.profile_list.addItem(self._profile)
-
-        triggers = self._parent._parent.triggers_manager.trigger_list.findItems("*", Qt.MatchWrap | Qt.MatchWildcard | Qt.MatchRecursive);
-        for trigger in triggers:
-            if type(trigger) is Trigger:
-                with contextlib.suppress(RuntimeError):
-                    self._parent._parent._parent.log_signal.disconnect(trigger.onLogUpdate)
-                self._parent._parent._parent.log_signal.connect(trigger.onLogUpdate)
-
-        self.current_profile = self._parent.profile_list.currentItem()
-        if(self.current_profile == self._profile):
-            self._parent._parent._parent.logreader.setLogFile(self._profile.log_file)
-            self._parent._parent._parent.logreader.stop()
-            self._parent._parent._parent.logreader.start()
-
         self.destroy()
 
     def cancelProfile(self):

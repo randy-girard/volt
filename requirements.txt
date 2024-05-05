@@ -1,6 +1,5 @@
 PySide6==6.5.1.1
 sip
-pypubsub==4.0.3
 pyobjc; sys_platform == 'darwin'
 playsound==1.2.2
 portalocker

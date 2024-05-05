@@ -3,7 +3,7 @@ import sys
 import os
 import xml.etree.ElementTree as ET
 
-from PySide6.QtWidgets import QWidget, QFileDialog
+from PySide6.QtWidgets import QApplication, QWidget, QFileDialog
 
 from volt.models.trigger_group import TriggerGroup
 from volt.models.trigger import Trigger
@@ -98,7 +98,7 @@ class ConfigManager(QWidget):
                                            "use_regex": True
                                        }
                                    ])
-                    self._parent.log_signal.connect(node.onLogUpdate)
+                    QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
                     root.addChild(node)
 
 
@@ -255,7 +255,7 @@ class ConfigManager(QWidget):
                end_early_triggers.append(record)
            node.timer_end_early_triggers = end_early_triggers
 
-           self._parent.log_signal.connect(node.onLogUpdate)
+           QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
         for child in item.findall("./TriggerGroups/TriggerGroup"):
             node.addChild(self.importGinaConfigNested(child))
         for child in item.findall("./Triggers/Trigger"):

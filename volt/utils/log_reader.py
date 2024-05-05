@@ -4,8 +4,9 @@ import signal
 import select
 import sys
 
+from PySide6.QtWidgets import QApplication
+
 from volt.utils.log_watcher import LogWatcher
-from pubsub import pub
 from threading import Thread
 from threading import Event
 
@@ -40,7 +41,7 @@ class LogReader():
 
     def callback(self, filename, lines):
         for line in lines:
-            pub.sendMessage('log', text=line.strip("\n"))
+            QApplication.instance()._signals["logreader"].new_line.emit(line)
 
     def init_tail_file(self, filename):
         return LogWatcher(".",

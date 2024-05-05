@@ -1,13 +1,12 @@
 import json
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTabWidget
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTabWidget
 from PySide6.QtCore import Signal, Slot, Qt, QEvent
 from PySide6.QtGui import QStandardItemModel
-from pubsub import pub
 
 from volt.models.category import Category
 
-from volt.utils.log_reader import LogReader
+from volt.utils.log_monitor import LogMonitor
 from volt.utils.speaker import Speaker
 
 from volt.managers.home_manager import HomeManager
@@ -17,8 +16,6 @@ from volt.managers.config_manager import ConfigManager
 from volt.managers.trigger_log_manager import TriggerLogManager
 
 class MainWindow(QWidget):
-    log_signal = Signal(str)
-
     def __init__(self, application_path):
         super(MainWindow, self).__init__()
 
@@ -53,10 +50,7 @@ class MainWindow(QWidget):
         self.setupTabs()
         self.layout.addWidget(self.main_widget)
 
-        self.logreader = LogReader()
-        self.log_signal.connect(self.onLogUpdate)
-
-        pub.subscribe(self.log_handler, 'log')
+        self.log_monitor = LogMonitor(self.profiles_manager)
 
 
     def setupTabs(self):
@@ -82,17 +76,9 @@ class MainWindow(QWidget):
 
     def destroy(self):
         self.speaker.stop()
-        self.logreader.stop()
+        self.log_monitor.stop()
+        self.profiles_manager.logreader.stop()
         self.overlays_manager.destroy()
 
     def closeEvent(self, event):
         self.destroy()
-
-    def log_handler(self, text):
-        self.log_signal.emit(text)
-
-
-    @Slot(str)
-    def onLogUpdate(self, text):
-        pass
-        #print(str)

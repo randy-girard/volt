@@ -24,7 +24,8 @@ class Trigger(QTreeWidgetItem):
                        timer_ended_play_sound_file=False, timer_ended_sound_file_path="",
                        timer_end_early_triggers=[],
                        parent=None,
-                       checked=Qt.CheckState.Unchecked):
+                       checked=Qt.CheckState.Unchecked,
+                       trigger_id=None):
 
         checked = self.fromCheckState(checked)
 
@@ -35,6 +36,9 @@ class Trigger(QTreeWidgetItem):
         self.search_text = search_text
         self.use_regex = use_regex
         self.owner = parent
+        self.trigger_id = trigger_id
+        if self.trigger_id == None:
+            self.trigger_id = id(self)
         self.last_timer = None
         self.timers = []
 
@@ -160,6 +164,7 @@ class Trigger(QTreeWidgetItem):
     def serialize(self):
         hash = {
             "type": "Trigger",
+            "trigger_id": self.trigger_id,
             "name": self.name,
             "timer_name": self.timer_name,
             "search_text": self.search_text,
@@ -222,68 +227,69 @@ class Trigger(QTreeWidgetItem):
                 self.regex_engine_enders.append(regex_engine)
 
     def onLogUpdate(self, text):
-        # Strip out the timestamp
-        stripped_str = re.sub("^\[.*?\] ", "", text)
+        if self.trigger_id in self.profiles_manager.current_profile.trigger_ids:
+            # Strip out the timestamp
+            stripped_str = re.sub("^\[.*?\] ", "", text)
 
-        # Remove whitespace
-        stripped_str = stripped_str.strip()
+            # Remove whitespace
+            stripped_str = stripped_str.strip()
 
-        if len(self.timers) > 0:
-            for ender in self.regex_engine_enders:
-                m = ender.match(stripped_str)
+            if len(self.timers) > 0:
+                for ender in self.regex_engine_enders:
+                    m = ender.match(stripped_str)
+                    if m:
+                        for timer in self.timers.copy():
+                            timer.destroy()
+
+            if self.owner and self.regex_engine.expression and self.parent() and self.parent().isChecked():
+                m = self.regex_engine.match(stripped_str)
                 if m:
-                    for timer in self.timers.copy():
-                        timer.destroy()
+                    name = self.timer_name
+                    name = self.regex_engine.execute(name, matches=m)
 
-        if self.owner and self.regex_engine.expression and self.parent() and self.parent().isChecked():
-            m = self.regex_engine.match(stripped_str)
-            if m:
-                name = self.timer_name
-                name = self.regex_engine.execute(name, matches=m)
+                    if self.interrupt_speech:
+                        self.speaker.stop()
 
-                if self.interrupt_speech:
-                    self.speaker.stop()
+                    if self.use_text_to_voice:
+                        text_to_say = self.text_to_voice_text
+                        if self.profiles_manager.current_profile:
+                            text_to_say = self.regex_engine.execute(text_to_say, matches=m)
+                        self.speaker.say(text_to_say)
 
-                if self.use_text_to_voice:
-                    text_to_say = self.text_to_voice_text
-                    if self.profiles_manager.current_profile:
-                        text_to_say = self.regex_engine.execute(text_to_say, matches=m)
-                    self.speaker.say(text_to_say)
+                    if self.play_sound_file and len(self.sound_file_path) > 0:
+                        path = self.sound_file_path
+                        playsound(path, False)
 
-                if self.play_sound_file and len(self.sound_file_path) > 0:
-                    path = self.sound_file_path
-                    playsound(path, False)
+                    categories = self.category_list.findItems(self.category, Qt.MatchExactly)
+                    for category in categories:
+                        if name and len(name) > 0:
+                            for overlay in self.timer_overlays:
+                                if overlay.data_model.name == category.timer_overlay:
+                                    add_timer = True
 
-                categories = self.category_list.findItems(self.category, Qt.MatchExactly)
-                for category in categories:
-                    if name and len(name) > 0:
-                        for overlay in self.timer_overlays:
-                            if overlay.data_model.name == category.timer_overlay:
-                                add_timer = True
-
-                                if len(self.timers) > 0:
-                                    if self.timer_start_behavior == "Restart current timer":
-                                        for timer in self.timers:
-                                            if self.restart_timer_matches:
-                                                if timer.label == name:
+                                    if len(self.timers) > 0:
+                                        if self.timer_start_behavior == "Restart current timer":
+                                            for timer in self.timers:
+                                                if self.restart_timer_matches:
+                                                    if timer.label == name:
+                                                        timer.restartTimer()
+                                                        add_timer = False
+                                                else:
                                                     timer.restartTimer()
                                                     add_timer = False
-                                            else:
-                                                timer.restartTimer()
-                                                add_timer = False
-                                    elif self.timer_start_behavior == "Do Nothing":
-                                        add_timer = False
+                                        elif self.timer_start_behavior == "Do Nothing":
+                                            add_timer = False
 
-                                if add_timer:
-                                    timer = overlay.addTimer(name, self.duration, trigger=self, category=category, matches=m)
+                                    if add_timer:
+                                        timer = overlay.addTimer(name, self.duration, trigger=self, category=category, matches=m)
+                                        self.trigger_log_manager.addItem(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), name, stripped_str)
+                                        self.timers.append(timer)
+
+                        for overlay in self.text_overlays:
+                            if overlay.data_model.name == category.text_overlay:
+                                if self.use_text:
+                                    overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category, matches=m)
                                     self.trigger_log_manager.addItem(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), name, stripped_str)
-                                    self.timers.append(timer)
-
-                    for overlay in self.text_overlays:
-                        if overlay.data_model.name == category.text_overlay:
-                            if self.use_text:
-                                overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category, matches=m)
-                                self.trigger_log_manager.addItem(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), name, stripped_str)
 
     def removeTimer(self, timer):
         self.timers.remove(timer)

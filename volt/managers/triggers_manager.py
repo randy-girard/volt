@@ -51,7 +51,6 @@ class TriggersManager(QWidget):
         self.trigger_list.itemClicked.connect(self.triggerListItemClicked)
         self.trigger_list.doubleClicked.connect(self.addTriggerOrTriggerGroupWindow)
 
-
     def load(self, json):
         for item in json:
             root = self.deserializeChildren(item)
@@ -73,6 +72,7 @@ class TriggersManager(QWidget):
         if item["type"] == "Trigger":
                 node = Trigger(parent=self._parent,
                                name=item["name"],
+                               trigger_id=item.get("trigger_id", None),
                                timer_name=item["timer_name"],
                                search_text=item["search_text"],
                                use_regex=bool(item["use_regex"]),
@@ -165,13 +165,17 @@ class TriggersManager(QWidget):
         self.trigger_list.blockSignals(False)
 
         group_ids = []
-        self.current_profile = self._parent.profiles_manager.profile_list.currentItem()
-        if self.current_profile:
-            trigger_groups = self.trigger_list.findItems("*", Qt.MatchWrap | Qt.MatchWildcard | Qt.MatchRecursive);
-            for trigger_group in trigger_groups:
-                if type(trigger_group) is TriggerGroup and trigger_group.checkState(0) == Qt.Checked:
-                    group_ids.append(trigger_group.group_id)
-            self.current_profile.trigger_group_ids = group_ids
+        trigger_ids = []
+        self.selected_profile = self._parent.profiles_manager.selected_profile;
+        if self.selected_profile:
+            triggers = self.trigger_list.findItems("*", Qt.MatchWrap | Qt.MatchWildcard | Qt.MatchRecursive);
+            for trigger in triggers:
+                if type(trigger) is TriggerGroup and trigger.checkState(0) == Qt.Checked:
+                    group_ids.append(trigger.group_id)
+                elif type(trigger) is Trigger and trigger.checkState(0) == Qt.Checked:
+                    trigger_ids.append(trigger.trigger_id)
+            self.selected_profile.trigger_group_ids = group_ids
+            self.selected_profile.trigger_ids = trigger_ids
 
     def triggerListItemChangedOnChildren(self, widgetItem, column, is_checked):
         for i in range(widgetItem.childCount()):

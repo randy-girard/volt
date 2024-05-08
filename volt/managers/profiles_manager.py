@@ -82,6 +82,7 @@ class ProfilesManager(QWidget):
                 self.current_profile = item
                 if self.selected_profile == None:
                     self.profile_list.setCurrentItem(item)
+                    self.profileListItemClicked(item)
 
                 item.setBackground( QColor('#7fc97f') )
 
@@ -105,8 +106,7 @@ class ProfilesManager(QWidget):
         self._parent.triggers_manager.trigger_list.blockSignals(True)
         triggers = self._parent.triggers_manager.trigger_list.findItems("*", Qt.MatchWrap | Qt.MatchWildcard | Qt.MatchRecursive);
         for trigger in triggers:
-            if type(trigger) is TriggerGroup:
-                trigger.setCheckState(0, Qt.Unchecked)
+            trigger.setCheckState(0, Qt.Unchecked)
         for trigger in triggers:
             if type(trigger) is TriggerGroup and trigger.group_id in profile.trigger_group_ids:
                 trigger.setCheckState(0, Qt.Checked)

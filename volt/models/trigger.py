@@ -33,6 +33,8 @@ class Trigger(QTreeWidgetItem):
         self.setFlags(self.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         self.setCheckState(0, checked)
 
+        self.counter = 0
+        self.last_matched_at = None
         self.search_text = search_text
         self.use_regex = use_regex
         self.owner = parent
@@ -241,11 +243,18 @@ class Trigger(QTreeWidgetItem):
                         for timer in self.timers.copy():
                             timer.destroy()
 
-            if self.owner and self.regex_engine.expression and self.parent() and self.parent().isChecked():
+            if self.owner and self.regex_engine.expression and self.isChecked():
                 m = self.regex_engine.match(stripped_str)
                 if m:
+                    self.last_matched_at = datetime.utcnow().strftime('%s')
+
                     name = self.timer_name
                     name = self.regex_engine.execute(name, matches=m)
+
+                    # Replace counter
+                    self.counter += 1
+                    name = name.replace("{COUNTER}", str(self.counter))
+                    name = name.replace("{counter}", str(self.counter))
 
                     if self.interrupt_speech:
                         self.speaker.stop()
@@ -270,6 +279,8 @@ class Trigger(QTreeWidgetItem):
                                     if len(self.timers) > 0:
                                         if self.timer_start_behavior == "Restart current timer":
                                             for timer in self.timers:
+                                                timer.label = name
+                                                
                                                 if self.restart_timer_matches:
                                                     if timer.label == name:
                                                         timer.restartTimer()

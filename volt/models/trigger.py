@@ -23,6 +23,8 @@ class Trigger(QTreeWidgetItem):
                        timer_ended_text_to_voice_text="", timer_ended_interrupt_speech=False,
                        timer_ended_play_sound_file=False, timer_ended_sound_file_path="",
                        timer_end_early_triggers=[],
+                       counter_duration=0,
+                       reset_counter_if_unmatched=False,
                        parent=None,
                        checked=Qt.CheckState.Unchecked,
                        trigger_id=None):
@@ -92,6 +94,9 @@ class Trigger(QTreeWidgetItem):
         self.timer_ended_sound_file_path = timer_ended_sound_file_path
 
         self.timer_end_early_triggers = timer_end_early_triggers
+
+        self.counter_duration = counter_duration
+        self.reset_counter_if_unmatched = reset_counter_if_unmatched
 
         self.compileExpressions()
 
@@ -202,6 +207,8 @@ class Trigger(QTreeWidgetItem):
             "timer_ended_play_sound_file": self.timer_ended_play_sound_file,
             "timer_ended_sound_file_path": self.timer_ended_sound_file_path,
             "timer_end_early_triggers": self.timer_end_early_triggers,
+            "counter_duration": self.counter_duration,
+            "reset_counter_if_unmatched": self.reset_counter_if_unmatched,
             "checked": self.checkStateToInt(self.checkState(0))
         }
         return hash
@@ -245,8 +252,14 @@ class Trigger(QTreeWidgetItem):
 
             if self.owner and self.regex_engine.expression and self.isChecked():
                 m = self.regex_engine.match(stripped_str)
+
+                now = datetime.utcnow().strftime('%s')
+
+                if self.last_matched_at and int(now) > int(self.last_matched_at) + int(self.counter_duration):
+                    self.counter = 0
+
                 if m:
-                    self.last_matched_at = datetime.utcnow().strftime('%s')
+                    self.last_matched_at = now
 
                     name = self.timer_name
                     name = self.regex_engine.execute(name, matches=m)
@@ -280,7 +293,7 @@ class Trigger(QTreeWidgetItem):
                                         if self.timer_start_behavior == "Restart current timer":
                                             for timer in self.timers:
                                                 timer.label = name
-                                                
+
                                                 if self.restart_timer_matches:
                                                     if timer.label == name:
                                                         timer.restartTimer()

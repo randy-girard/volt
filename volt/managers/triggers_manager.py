@@ -107,7 +107,9 @@ class TriggersManager(QWidget):
                                timer_ended_play_sound_file=bool(item.get("timer_ended_play_sound_file", False)),
                                timer_ended_sound_file_path=item.get("timer_ended_sound_file_path"),
                                timer_end_early_triggers=item.get("timer_end_early_triggers", []),
-                               checked=item.get("checked", 0))
+                               checked=item.get("checked", 0),
+                               reset_counter_if_unmatched=bool(item.get("reset_counter_if_unmatched", False)),
+                               counter_duration=int(item.get("counter_duration", 0)))
                 QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
         elif item["type"] == "TriggerGroup":
             node = TriggerGroup(name=item["name"],

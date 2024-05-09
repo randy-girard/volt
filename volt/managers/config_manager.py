@@ -255,6 +255,9 @@ class ConfigManager(QWidget):
                end_early_triggers.append(record)
            node.timer_end_early_triggers = end_early_triggers
 
+           node.reset_counter_if_unmatched = bool(item.find("UseCounterResetTimer").text == "True")
+           node.counter_duration = int(item.find("CounterResetDuration").text)
+
            QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
         for child in item.findall("./TriggerGroups/TriggerGroup"):
             node.addChild(self.importGinaConfigNested(child))

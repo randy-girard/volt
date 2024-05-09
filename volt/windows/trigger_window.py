@@ -95,6 +95,7 @@ class TriggerWindow(QWidget):
         self.tabs.addTab(self.buildTimerTab(), "Timer")
         self.tabs.addTab(self.buildTimerEndingTab(), "Timer Ending")
         self.tabs.addTab(self.buildTimerEndedTab(), "Timer Ended")
+        self.tabs.addTab(self.buildCounterTab(), "Counter")
 
         self.layout.addWidget(self.tabs, 4, 0, 1, 2)
         self.layout.addLayout(self.button_layout, 5, 0, 1, 2, alignment=Qt.AlignmentFlag.AlignRight)
@@ -427,6 +428,52 @@ class TriggerWindow(QWidget):
 
         return self.timer_ended_tab
 
+    def buildCounterTab(self):
+        self.counter_tab = QWidget()
+
+        layout = QGridLayout()
+        layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+
+        seconds = self._trigger.counter_duration % (24 * 3600)
+        hours = seconds // 3600
+        seconds %= 3600
+        minutes = seconds // 60
+        seconds %= 60
+
+
+        self.reset_counter = QCheckBox("Reset counter if unmatched for")
+        self.reset_counter.setChecked(self._trigger.reset_counter_if_unmatched)
+        layout.addWidget(self.reset_counter, 0, 0)
+
+        self.counter_duration_h_input = QLineEdit(self)
+        self.counter_duration_h_input.setText(str(hours))
+        self.counter_duration_h_input.setFixedWidth(25)
+        self.counter_duration_h_label = QLabel("h")
+        self.counter_duration_h_label.setFixedWidth(15)
+
+        self.counter_duration_m_input = QLineEdit(self)
+        self.counter_duration_m_input.setText(str(minutes))
+        self.counter_duration_m_input.setFixedWidth(25)
+        self.counter_duration_m_label = QLabel("m")
+        self.counter_duration_m_label.setFixedWidth(15)
+
+        self.counter_duration_s_input = QLineEdit(self)
+        self.counter_duration_s_input.setText(str(seconds))
+        self.counter_duration_s_input.setFixedWidth(25)
+        self.counter_duration_s_label = QLabel("s")
+        self.counter_duration_s_label.setFixedWidth(15)
+
+        layout.addWidget(self.counter_duration_h_input, 0, 1)
+        layout.addWidget(self.counter_duration_h_label, 0, 2)
+        layout.addWidget(self.counter_duration_m_input, 0, 3)
+        layout.addWidget(self.counter_duration_m_label, 0, 4)
+        layout.addWidget(self.counter_duration_s_input, 0, 5)
+        layout.addWidget(self.counter_duration_s_label, 0, 6)
+
+        self.counter_tab.setLayout(layout)
+
+        return self.counter_tab
+
 
     def saveTrigger(self):
         self._trigger.setName(self.trigger_input.text())
@@ -477,6 +524,13 @@ class TriggerWindow(QWidget):
         self._trigger.timer_ended_interrupt_speech = self.timer_ended_interrupt_speech.isChecked()
         self._trigger.timer_ended_play_sound_file = self.timer_ended_play_sound_file.isChecked()
         self._trigger.timer_ended_sound_file_path = self.timer_ended_sound_file_path.text()
+
+        counter_duration = int(self.counter_duration_h_input.text() or 0) * 60 * 60
+        counter_duration += int(self.counter_duration_m_input.text() or 0) * 60
+        counter_duration += int(self.counter_duration_s_input.text() or 0)
+        self._trigger.reset_counter_if_unmatched = self.reset_counter.isChecked()
+        self._trigger.counter_duration = counter_duration
+
 
         self._trigger.timer_end_early_triggers = []
         for row in range(self.end_early_triggers.rowCount()):

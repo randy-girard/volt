@@ -266,8 +266,9 @@ class Trigger(QTreeWidgetItem):
 
                     # Replace counter
                     self.counter += 1
-                    name = name.replace("{COUNTER}", str(self.counter))
-                    name = name.replace("{counter}", str(self.counter))
+                    if name:
+                        name = name.replace("{COUNTER}", str(self.counter))
+                        name = name.replace("{counter}", str(self.counter))
 
                     if self.interrupt_speech:
                         self.speaker.stop()

@@ -24,13 +24,14 @@ class App(QApplication):
     def __init__(self, *args):
         super().__init__(*args)
 
+        self.loaded = False
         self.plugins = {}
 
         self._signals = {}
         self._signals['logreader'] = LogReaderSignals()
         self._signals['timers'] = []
 
-        QApplication.instance().config_manager = None
+        self.config_manager = None
 
         try:
             self._signals['settings'] = SettingsSignals()
@@ -47,8 +48,9 @@ class App(QApplication):
         application_path = os.path.dirname(os.path.abspath(*args[0]))
 
         w = main_window.MainWindow(application_path)
+        self.loaded = True
         w.show()
 
     def save(self):
-        if QApplication.instance().config_manager:
-            QApplication.instance().config_manager.save()
+        if self.config_manager and self.loaded:
+            self.config_manager.save()

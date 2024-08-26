@@ -83,6 +83,8 @@ class OverlayWindow(FramelessWindowManager):
         self.overlay_sort_method_input = QComboBox()
         self.overlay_sort_method_input.addItem("Order Triggered")
         self.overlay_sort_method_input.addItem("Time Remaining")
+        self.overlay_sort_method_input.addItem("Timer Text")
+        self.overlay_sort_method_input.addItem("Timer Text (Desc)")
         self.overlay_sort_method_input.setCurrentText(self.data_model.sort_method)
         self.toolbar_layout.addWidget(self.overlay_sort_method_input, 1, 2)
 
@@ -98,29 +100,8 @@ class OverlayWindow(FramelessWindowManager):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff);
         self.setTransparency(not is_new_window)
 
-        #self.focusManager = QTimer()
-        #self.focusManager.timeout.connect(self.onUpdateFocus)
-        #self.focusManager.start(100)
-
-
     def setButton(self, button):
         self.button = button
-
-    def onUpdateFocus(self):
-        active_window_name = None
-
-        if sys.platform == "darwin":
-            active_window_name = (NSWorkspace.sharedWorkspace().activeApplication()["NSApplicationPath"])
-        elif sys.platform == "win32":
-            active_window_name = GetWindowText(GetForegroundWindow())
-
-        # or is this window?
-        if self.is_transparent and 'everquest' in active_window_name.lower():
-            self.setVisible(True)
-        elif not self.is_transparent:
-            self.setVisible(True)
-        else:
-            self.setVisible(False)
 
     def addTimer(self, text, duration, trigger=None, category=None, matches=None):
         timer = Timer(self, text, duration, trigger=trigger, category=category, matches=matches)

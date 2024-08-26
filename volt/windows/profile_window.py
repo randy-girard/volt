@@ -1,6 +1,6 @@
 import contextlib
 
-from PySide6.QtWidgets import QWidget, QGridLayout, QLineEdit, QPushButton, QFileDialog, QLabel
+from PySide6.QtWidgets import QApplication, QWidget, QGridLayout, QLineEdit, QPushButton, QFileDialog, QLabel
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
 
@@ -62,6 +62,7 @@ class ProfileWindow(QWidget):
         self._profile.setName(self.name_input.text())
         self._profile.setLogFile(self.logfile_input.text())
         self._parent.profile_list.addItem(self._profile)
+        QApplication.instance().save()
         self.destroy()
 
     def cancelProfile(self):

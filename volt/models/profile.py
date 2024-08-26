@@ -1,13 +1,11 @@
 from PySide6.QtWidgets import QListWidgetItem
 
 class Profile(QListWidgetItem):
-    def __init__(self, parent=None, name="", log_file="", trigger_group_ids=[], trigger_ids=[]):
+    def __init__(self, parent=None, name="", log_file="", trigger_ids=[]):
         super().__init__(name, parent)
         self._parent = parent
         self.setName(name)
         self.setLogFile(log_file)
-
-        self.trigger_group_ids = trigger_group_ids
         self.trigger_ids = trigger_ids
 
     def setName(self, val):
@@ -21,7 +19,6 @@ class Profile(QListWidgetItem):
         hash = {
             "name": self.name,
             "log_file": self.log_file,
-            "trigger_group_ids": self.trigger_group_ids,
             "trigger_ids": self.trigger_ids
         }
         return hash

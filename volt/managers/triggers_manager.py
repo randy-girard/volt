@@ -76,7 +76,7 @@ class TriggersManager(QWidget):
                                timer_name=item["timer_name"],
                                search_text=item["search_text"],
                                use_regex=bool(item["use_regex"]),
-                               duration=int(item["duration"]),
+                               duration=float(item["duration"]),
                                category=item.get("category", ""),
                                timer_type=item.get("timer_type", "Timer (Count Down)"),
                                use_text=bool(item.get("use_text", False)),
@@ -107,10 +107,11 @@ class TriggersManager(QWidget):
                                timer_ended_play_sound_file=bool(item.get("timer_ended_play_sound_file", False)),
                                timer_ended_sound_file_path=item.get("timer_ended_sound_file_path"),
                                timer_end_early_triggers=item.get("timer_end_early_triggers", []),
+                               variables=item.get("variables", []),
                                checked=item.get("checked", 0),
                                reset_counter_if_unmatched=bool(item.get("reset_counter_if_unmatched", False)),
                                counter_duration=int(item.get("counter_duration", 0)))
-                QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
+                #QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
         elif item["type"] == "TriggerGroup":
             node = TriggerGroup(name=item["name"],
                                 comments=item["comments"],
@@ -166,24 +167,23 @@ class TriggersManager(QWidget):
         self.triggerListItemChangedOnParents(widgetItem, column, is_checked)
         self.trigger_list.blockSignals(False)
 
-        group_ids = []
         trigger_ids = []
         self.selected_profile = self._parent.profiles_manager.selected_profile;
         if self.selected_profile:
             triggers = self.trigger_list.findItems("*", Qt.MatchWrap | Qt.MatchWildcard | Qt.MatchRecursive);
             for trigger in triggers:
-                if type(trigger) is TriggerGroup and trigger.checkState(0) == Qt.Checked:
-                    group_ids.append(trigger.group_id)
-                elif type(trigger) is Trigger and trigger.checkState(0) == Qt.Checked:
+                if type(trigger) is Trigger and trigger.checkState(0) == Qt.Checked:
                     trigger_ids.append(trigger.trigger_id)
-            self.selected_profile.trigger_group_ids = group_ids
             self.selected_profile.trigger_ids = trigger_ids
+        QApplication.instance().save()  
 
     def triggerListItemChangedOnChildren(self, widgetItem, column, is_checked):
         for i in range(widgetItem.childCount()):
             child = widgetItem.child(i)
             child.setCheckState(column, is_checked)
             self.triggerListItemChangedOnChildren(child, column, is_checked)
+        if type(widgetItem) is Trigger:
+            widgetItem.manageEvents(is_checked)
 
     def triggerListItemChangedOnParents(self, widgetItem, column, is_checked):
         parent = widgetItem.parent()
@@ -237,6 +237,7 @@ class TriggersManager(QWidget):
             parent.removeChild(item)
         else:
             self.trigger_list.takeTopLevelItem(self.trigger_list.indexOfTopLevelItem(item))
+        QApplication.instance().save()
 
     def addTriggerGroupWindow(self):
         parent_group = None

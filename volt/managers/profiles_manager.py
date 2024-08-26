@@ -47,7 +47,6 @@ class ProfilesManager(QWidget):
             self.files.append(profile["log_file"])
             Profile(self.profile_list, name=profile["name"],
                                        log_file=profile["log_file"],
-                                       trigger_group_ids=profile.get("trigger_group_ids", []),
                                        trigger_ids=profile.get("trigger_ids", []))
 
 
@@ -69,10 +68,14 @@ class ProfilesManager(QWidget):
     def removeProfileWindow(self):
         item = self.profile_list.currentItem()
         self.profile_list.takeItem(self.profile_list.row(item))
+        QApplication.instance().save()
 
     def profileListItemClicked(self, item):
         self.setTriggers(item)
         self.selected_profile = item
+        self.button.setEnabled(True)
+        self.buttona.setEnabled(True)
+        self.buttonb.setEnabled(True)
 
     def setActiveByFile(self, file):
         for i in range(self.profile_list.count()):
@@ -94,12 +97,6 @@ class ProfilesManager(QWidget):
                 if len(item.log_file) > 0:
                     self.logreader.setLogFile(item.log_file)
                     self.logreader.start()
-                    triggers = self._parent.triggers_manager.trigger_list.findItems("*", Qt.MatchWrap | Qt.MatchWildcard | Qt.MatchRecursive);
-                    for trigger in triggers:
-                        if type(trigger) is Trigger:
-                            with contextlib.suppress(RuntimeError):
-                                QApplication.instance()._signals["logreader"].new_line.disconnect(trigger.onLogUpdate)
-                            QApplication.instance()._signals["logreader"].new_line.connect(trigger.onLogUpdate)
 
 
     def setTriggers(self, profile):
@@ -108,11 +105,8 @@ class ProfilesManager(QWidget):
         for trigger in triggers:
             trigger.setCheckState(0, Qt.Unchecked)
         for trigger in triggers:
-            if type(trigger) is TriggerGroup and trigger.group_id in profile.trigger_group_ids:
+            if type(trigger) is Trigger and trigger.trigger_id in profile.trigger_ids:
                 trigger.setCheckState(0, Qt.Checked)
                 self._parent.triggers_manager.triggerListItemChangedOnParents(trigger, 0, Qt.Checked)
-                self._parent.triggers_manager.triggerListItemChangedOnChildren(trigger, 0, Qt.Checked)
-            elif type(trigger) is Trigger and trigger.trigger_id in profile.trigger_ids:
-                trigger.setCheckState(0, Qt.Checked)
-                self._parent.triggers_manager.triggerListItemChangedOnParents(trigger, 0, Qt.Checked)
+                trigger.manageEvents(True)
         self._parent.triggers_manager.trigger_list.blockSignals(False)

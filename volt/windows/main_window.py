@@ -1,7 +1,8 @@
 import json
+import sys
 
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTabWidget
-from PySide6.QtCore import Signal, Slot, Qt, QEvent
+from PySide6.QtCore import Signal, Slot, Qt, QEvent, QTimer
 from PySide6.QtGui import QStandardItemModel
 
 from volt.models.category import Category
@@ -14,6 +15,11 @@ from volt.managers.categories_manager import CategoriesManager
 from volt.managers.overlays_manager import OverlaysManager
 from volt.managers.config_manager import ConfigManager
 from volt.managers.trigger_log_manager import TriggerLogManager
+
+if sys.platform == "darwin":
+    from AppKit import NSWorkspace
+elif sys.platform == "win32":
+    from win32gui import GetWindowText, GetForegroundWindow
 
 class MainWindow(QWidget):
     def __init__(self, application_path):
@@ -33,6 +39,8 @@ class MainWindow(QWidget):
         self.main_layout = QHBoxLayout(self.main_widget)
 
         self.config_manager = ConfigManager(self)
+        QApplication.instance().config_manager = self.config_manager
+        
         self.home_manager = HomeManager(self)
         self.profiles_manager = self.home_manager.profiles_manager
         self.triggers_manager = self.home_manager.triggers_manager
@@ -51,6 +59,34 @@ class MainWindow(QWidget):
         self.layout.addWidget(self.main_widget)
 
         self.log_monitor = LogMonitor(self.profiles_manager)
+
+        self.focusManager = QTimer()
+        self.focusManager.timeout.connect(self.onUpdateFocus)
+        #self.focusManager.start(100)
+
+        self.attachToWindows = [
+            "everquest",
+            "project1999"
+        ]
+
+    def onUpdateFocus(self):
+        active_window_name = None
+        found_window = False
+
+        if sys.platform == "darwin":
+            active_window_name = (NSWorkspace.sharedWorkspace().activeApplication()["NSApplicationPath"]).lower()
+        elif sys.platform == "win32":
+            active_window_name = GetWindowText(GetForegroundWindow()).lower()
+
+        for window in self.attachToWindows:
+            if window in active_window_name:
+                found_window = True
+                break
+
+        if found_window:
+            self.overlays_manager.showAllOverlayWindows();
+        else:
+            self.overlays_manager.hideAllOverlayWindows();
 
 
     def setupTabs(self):
@@ -75,6 +111,8 @@ class MainWindow(QWidget):
             self.setFixedHeight(600)
 
     def destroy(self):
+        QApplication.instance().quit()
+        QApplication.instance()._map.deleteLater()
         self.speaker.stop()
         self.log_monitor.stop()
         self.profiles_manager.logreader.stop()

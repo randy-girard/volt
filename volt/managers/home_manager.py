@@ -21,17 +21,18 @@ class HomeManager(QWidget):
         self.profiles_manager = ProfilesManager(self)
         self.triggers_manager = TriggersManager(self)
 
-        button4 = QPushButton("Save Config")
+        button4 = QPushButton("Toggle Map")
         button5 = QPushButton("Import GINA Config")
         button6 = QPushButton("Import spells_us.txt")
 
-        button4.clicked.connect(self._parent.config_manager.save)
+        button4.clicked.connect(self._parent.config_manager.toggleMap)
         button5.clicked.connect(self._parent.config_manager.importGinaConfig)
         button6.clicked.connect(self._parent.config_manager.importSpellsUsConfig)
 
         self.home_layout.addWidget(button4, 1, 3)
-        self.home_layout.addWidget(button5, 1, 4)
-        #self.home_layout.addWidget(button6, 2, 4)
+        self.home_layout.addWidget(button5, 2, 3)
+        #self.home_layout.addWidget(button6, 1, 4)
+        #self.home_layout.addWidget(button7, 2, 4)
 
         self.home_tab.setLayout(self.home_layout)
 

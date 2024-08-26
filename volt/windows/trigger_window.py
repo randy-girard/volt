@@ -96,6 +96,7 @@ class TriggerWindow(QWidget):
         self.tabs.addTab(self.buildTimerEndingTab(), "Timer Ending")
         self.tabs.addTab(self.buildTimerEndedTab(), "Timer Ended")
         self.tabs.addTab(self.buildCounterTab(), "Counter")
+        self.tabs.addTab(self.buildVariableTab(), "Variables")
 
         self.layout.addWidget(self.tabs, 4, 0, 1, 2)
         self.layout.addLayout(self.button_layout, 5, 0, 1, 2, alignment=Qt.AlignmentFlag.AlignRight)
@@ -179,29 +180,30 @@ class TriggerWindow(QWidget):
         seconds %= 3600
         minutes = seconds // 60
         seconds %= 60
+        milliseconds = (seconds - int(seconds)) * 1000
 
         duration_layout = QHBoxLayout()
         duration_layout.setAlignment(Qt.AlignLeft)
         self.duration_h_input = QLineEdit(self)
-        self.duration_h_input.setText(str(hours))
+        self.duration_h_input.setText(str(int(hours)))
         self.duration_h_input.setFixedWidth(25)
         self.duration_h_label = QLabel("h")
         self.duration_h_label.setFixedWidth(15)
 
         self.duration_m_input = QLineEdit(self)
-        self.duration_m_input.setText(str(minutes))
+        self.duration_m_input.setText(str(int(minutes)))
         self.duration_m_input.setFixedWidth(25)
         self.duration_m_label = QLabel("m")
         self.duration_m_label.setFixedWidth(15)
 
         self.duration_s_input = QLineEdit(self)
-        self.duration_s_input.setText(str(seconds))
+        self.duration_s_input.setText(str(int(seconds)))
         self.duration_s_input.setFixedWidth(25)
         self.duration_s_label = QLabel("s")
         self.duration_s_label.setFixedWidth(15)
 
         self.duration_ms_input = QLineEdit(self)
-        self.duration_ms_input.setText("0")
+        self.duration_ms_input.setText(str(int(milliseconds)))
         self.duration_ms_input.setFixedWidth(25)
         self.duration_ms_label = QLabel("ms")
         self.duration_ms_label.setFixedWidth(15)
@@ -474,6 +476,61 @@ class TriggerWindow(QWidget):
 
         return self.counter_tab
 
+    def buildVariableTab(self):
+        self.variable_tab = QWidget()
+        layout = QGridLayout()
+        layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+
+        self.variables = TriggerEndEarlyTable(0, 3)
+        self.variables.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.variables.verticalHeader().setVisible(False)
+        self.variables.setSelectionBehavior(QAbstractItemView.SelectRows);
+        header = self.variables.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.variables.setHorizontalHeaderLabels(["Variable Name", "Search Text", "Value"]);
+
+        if len(self._trigger.variables) > 0:
+            idx = 0
+            for variable in self._trigger.variables:
+                self.variables.insertRow(self.variables.rowCount())
+                item = QTableWidgetItem();
+                item.setFlags(item.flags() | Qt.ItemIsEditable);
+                item.setData(Qt.DisplayRole, variable["name"]);
+                self.variables.setItem(idx, 0, item);
+                item2 = QTableWidgetItem();
+                item2.setFlags(item2.flags() | Qt.ItemIsEditable);
+                item2.setData(Qt.DisplayRole, variable["search"]);
+                self.variables.setItem(idx, 1, item2);
+                item3 = QTableWidgetItem();
+                item3.setFlags(item3.flags() | Qt.ItemIsEditable);
+                item3.setData(Qt.DisplayRole, variable["value"]);
+                self.variables.setItem(idx, 2, item3);
+                idx += 1
+        else:
+            self.variables.insertRow(self.variables.rowCount())
+            item = QTableWidgetItem();
+            item.setFlags(item.flags() | Qt.ItemIsEditable);
+            item.setData(Qt.DisplayRole, "");
+            self.variables.setItem(0, 0, item);
+            item2 = QTableWidgetItem();
+            item2.setFlags(item2.flags() | Qt.ItemIsEditable);
+            item2.setData(Qt.DisplayRole, "");
+            self.variables.setItem(0, 1, item2);
+            item3 = QTableWidgetItem();
+            item3.setFlags(item3.flags() | Qt.ItemIsEditable);
+            item3.setData(Qt.DisplayRole, "");
+            self.variables.setItem(0, 2, item3);
+
+        self.variables.resizeRowsToContents()
+
+        layout.addWidget(self.variables)
+
+        self.variable_tab.setLayout(layout)
+
+        return self.variable_tab
+
 
     def saveTrigger(self):
         self._trigger.setName(self.trigger_input.text())
@@ -501,6 +558,7 @@ class TriggerWindow(QWidget):
         duration = int(self.duration_h_input.text() or 0) * 60 * 60
         duration += int(self.duration_m_input.text() or 0) * 60
         duration += int(self.duration_s_input.text() or 0)
+        duration += float(self.duration_ms_input.text() or 0) / 1000
         self._trigger.setDuration(duration)
 
         timer_ending_duration = int(self.timer_ending_duration_h_input.text() or 0) * 60 * 60
@@ -542,16 +600,27 @@ class TriggerWindow(QWidget):
             }
             self._trigger.timer_end_early_triggers.append(item)
 
+        self._trigger.variables = []
+        for row in range(self.variables.rowCount()):
+            name = self.variables.item(row, 0).text()
+            search =  self.variables.item(row, 1).text()
+            value = self.variables.item(row, 2).text()
+            item = {
+              "name": name,
+              "search": search,
+              "value": value
+            }
+            self._trigger.variables.append(item)
+
 
         if self._is_new:
             if self._trigger_group:
                 self._trigger_group.addChild(self._trigger)
             else:
                 self._parent.trigger_list.addTopLevelItem(self._trigger)
-            QApplication.instance()._signals["logreader"].new_line.connect(self._trigger.onLogUpdate)
 
         self._trigger.compileExpressions()
-
+        QApplication.instance().save()
         self.destroy()
 
     def cancelTrigger(self):

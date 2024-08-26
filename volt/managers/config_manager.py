@@ -15,6 +15,10 @@ class ConfigManager(QWidget):
         super(ConfigManager, self).__init__()
 
         self._parent = parent
+        QApplication.instance().config_manager = self
+
+    def toggleMap(self):
+        QApplication.instance()._map.toggle()
 
     def save(self):
         config = {
@@ -98,7 +102,7 @@ class ConfigManager(QWidget):
                                            "use_regex": True
                                        }
                                    ])
-                    QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
+                    #QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
                     root.addChild(node)
 
 
@@ -114,7 +118,7 @@ class ConfigManager(QWidget):
             tree = ET.parse(filename)
             root = tree.getroot()
 
-            self._parent.overlays_manager.clearOverlayWindows()
+            #self._parent.overlays_manager.clearOverlayWindows()
             for item in root.findall("./BehaviorGroups/Behavior"):
                 window = item.find("./WindowLayout/WINDOWPLACEMENT/normalPosition")
                 sort_method = item.find("SortMethod").text
@@ -138,7 +142,7 @@ class ConfigManager(QWidget):
                 }
                 self._parent.overlays_manager.createOverlay(config)
 
-            self._parent.profiles_manager.profile_list.clear()
+            #self._parent.profiles_manager.profile_list.clear()
             for item in root.findall('./Characters/Character'):
                 trigger_group_ids = [int(child.get("GroupId")) for child in item.findall("./TriggerGroups/TriggerGroup")]
                 profile = Profile(name=item.find("DisplayName").text,
@@ -146,12 +150,12 @@ class ConfigManager(QWidget):
                                   trigger_group_ids=trigger_group_ids)
                 self._parent.profiles_manager.profile_list.addItem(profile)
 
-            self._parent.triggers_manager.trigger_list.clear()
+            #self._parent.triggers_manager.trigger_list.clear()
             for item in root.findall('./TriggerGroups/TriggerGroup'):
                 root_item = self.importGinaConfigNested(item)
                 self._parent.triggers_manager.trigger_list.addTopLevelItem(root_item)
 
-            self._parent.categories_manager.category_list.clear()
+            #self._parent.categories_manager.category_list.clear()
             for item in root.findall('./Categories/Category'):
                 category = Category(name=item.find("Name").text,
                                     timer_overlay=item.find("TimerOverlay").text,
@@ -258,7 +262,7 @@ class ConfigManager(QWidget):
            node.reset_counter_if_unmatched = bool(item.find("UseCounterResetTimer").text == "True")
            node.counter_duration = int(item.find("CounterResetDuration").text)
 
-           QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
+           #QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
         for child in item.findall("./TriggerGroups/TriggerGroup"):
             node.addChild(self.importGinaConfigNested(child))
         for child in item.findall("./Triggers/Trigger"):

@@ -90,7 +90,7 @@ class Timer(QWidget):
     def sortValue(self):
         if self.parent.data_model.sort_method == "Time Remaining":
             return self.endtime - (time.time() * 1000)
-        elif self.parent.data_model.sort_method.startswith("Timer Text"):
+        elif self.parent.data_model.sort_method[:10] == "Timer Text":
             return [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', self.label)]
         else:
             return self.starttime

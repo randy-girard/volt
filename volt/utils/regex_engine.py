@@ -1,8 +1,9 @@
 import re
 
+from PySide6.QtWidgets import QApplication
+
 class RegexEngine():
-    def __init__(self, profile=None):
-        self.profile = profile
+    def __init__(self):
         self.expression = None
         self.duration = None
         self.replace_char = ""
@@ -82,8 +83,8 @@ class RegexEngine():
                         text = text.replace(f"{{{index + 1}}}", match)
                         text = text.replace(f"{{{self.replace_char}{index + 1}}}", match)
 
-            if self.profile:
-                text = text.replace("{C}", self.profile.name)
-                text = text.replace("{c}", self.profile.name)
+            if QApplication.instance().current_profile:
+                text = text.replace("{c}", QApplication.instance().current_profile.name)
+                text = text.replace("{C}", QApplication.instance().current_profile.name)
 
         return text

@@ -72,6 +72,7 @@ class TriggersManager(QWidget):
         if item["type"] == "Trigger":
                 node = Trigger(parent=self._parent,
                                name=item["name"],
+                               trigger_group=parent,
                                trigger_id=item.get("trigger_id", None),
                                timer_name=item["timer_name"],
                                search_text=item["search_text"],
@@ -115,6 +116,7 @@ class TriggersManager(QWidget):
         elif item["type"] == "TriggerGroup":
             node = TriggerGroup(name=item["name"],
                                 comments=item["comments"],
+                                trigger_group=parent,
                                 group_id=item.get("group_id", None),
                                 checked=item.get("checked", 0))
         for child in item["children"]:
@@ -175,7 +177,7 @@ class TriggersManager(QWidget):
                 if type(trigger) is Trigger and trigger.checkState(0) == Qt.Checked:
                     trigger_ids.append(trigger.trigger_id)
             self.selected_profile.trigger_ids = trigger_ids
-        QApplication.instance().save()  
+        QApplication.instance().save()
 
     def triggerListItemChangedOnChildren(self, widgetItem, column, is_checked):
         for i in range(widgetItem.childCount()):

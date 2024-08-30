@@ -147,7 +147,7 @@ class ConfigManager(QWidget):
                 trigger_group_ids = [int(child.get("GroupId")) for child in item.findall("./TriggerGroups/TriggerGroup")]
                 profile = Profile(name=item.find("DisplayName").text,
                                   log_file=item.find("LogFilePath").text,
-                                  trigger_group_ids=trigger_group_ids)
+                                  trigger_ids=[])
                 self._parent.profiles_manager.profile_list.addItem(profile)
 
             #self._parent.triggers_manager.trigger_list.clear()
@@ -166,11 +166,12 @@ class ConfigManager(QWidget):
                 self._parent.categories_manager.category_list.addItem(category)
 
 
-    def importGinaConfigNested(self, item):
+    def importGinaConfigNested(self, item, parent=None):
         node = None
         if item.tag == "TriggerGroup":
             node = TriggerGroup(group_id=int(item.find("GroupId").text),
                                 name=item.find("Name").text,
+                                parent=parent,
                                 comments=item.find("Comments").text)
         elif item.tag == "Trigger":
            timer_type = item.find("TimerType").text
@@ -264,7 +265,7 @@ class ConfigManager(QWidget):
 
            #QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
         for child in item.findall("./TriggerGroups/TriggerGroup"):
-            node.addChild(self.importGinaConfigNested(child))
+            node.addChild(self.importGinaConfigNested(child, node))
         for child in item.findall("./Triggers/Trigger"):
-            node.addChild(self.importGinaConfigNested(child))
+            node.addChild(self.importGinaConfigNested(child, node))
         return node

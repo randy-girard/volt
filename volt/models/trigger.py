@@ -1,5 +1,4 @@
 import re
-
 from playsound import playsound
 from datetime import datetime
 
@@ -28,6 +27,7 @@ class Trigger(QTreeWidgetItem):
                        counter_duration=0,
                        reset_counter_if_unmatched=False,
                        parent=None,
+                       trigger_group=None,
                        checked=Qt.CheckState.Unchecked,
                        trigger_id=None):
 
@@ -58,10 +58,11 @@ class Trigger(QTreeWidgetItem):
         self.profiles_manager = self.owner._parent.profiles_manager
         self.trigger_log_manager = self.owner._parent.trigger_log_manager
 
-        self.regex_engine = RegexEngine(self.profiles_manager.current_profile)
+        self.regex_engine = RegexEngine()
         self.regex_engine_enders = []
 
         self.setName(name)
+        self.setTriggerGroup(trigger_group)
         self.setTimerName(timer_name)
         self.setDuration(duration)
         self.setCategory(category)
@@ -105,6 +106,18 @@ class Trigger(QTreeWidgetItem):
         self.reset_counter_if_unmatched = reset_counter_if_unmatched
 
         self.compileExpressions()
+
+    def setTriggerGroup(self, trigger_group):
+        self.trigger_group = trigger_group
+
+    def getFullTriggerName(self):
+        if self.trigger_group:
+            name = self.trigger_group.getFullTriggerName()
+            return name + " / " + self.name
+        else:
+            return self.name
+
+
 
     def manageEvents(self, is_checked):
         if is_checked:
@@ -244,7 +257,7 @@ class Trigger(QTreeWidgetItem):
             print(self.search_text)
 
         for trigger in self.timer_end_early_triggers:
-            regex_engine = RegexEngine(self)
+            regex_engine = RegexEngine()
             text = trigger["text"]
             if len(text) > 0:
                 if not trigger["use_regex"]:
@@ -253,7 +266,7 @@ class Trigger(QTreeWidgetItem):
                 self.regex_engine_enders.append(regex_engine)
 
         for variable in self.variables:
-            regex_engine = RegexEngine(self)
+            regex_engine = RegexEngine()
             text = variable["search"]
             if len(text) > 0:
                 text = text.replace("*", "\w+")
@@ -264,19 +277,12 @@ class Trigger(QTreeWidgetItem):
                 }
                 self.regex_variables.append(item)
 
-    def onLogUpdate(self, text):
-        # Strip out the timestamp
-        stripped_str = re.sub("^\[.*?\] ", "", text)
-
-
-        # Remove whitespace
-        stripped_str = stripped_str.strip()
-
+    def onLogUpdate(self, timestamp, text):
         for item in self.regex_variables:
             engine = item["regex_engine"]
             var = item["variable"]
 
-            var_matches = engine.match(stripped_str)
+            var_matches = engine.match(text)
             if var_matches:
                 result = engine.execute(var["value"], matches=var_matches)
                 if result:
@@ -284,13 +290,13 @@ class Trigger(QTreeWidgetItem):
 
         if len(self.timers) > 0:
             for ender in self.regex_engine_enders:
-                m = ender.match(stripped_str)
+                m = ender.match(text)
                 if m:
                     for timer in self.timers.copy():
                         timer.destroy()
 
         if self.owner and self.regex_engine.expression and self.isChecked():
-            m = self.regex_engine.match(stripped_str)
+            m = self.regex_engine.match(text)
 
             now = datetime.utcnow().strftime('%s')
 
@@ -354,7 +360,7 @@ class Trigger(QTreeWidgetItem):
                                         duration = self.regex_engine.duration
 
                                     timer = overlay.addTimer(name, duration, trigger=self, category=category, matches=m)
-                                    self.trigger_log_manager.addItem(datetime.now().strftime("%Y-%m-%d %I:%M:%S %p"), name, stripped_str)
+                                    self.trigger_log_manager.addItem(datetime.now().strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
                                     QApplication.instance()._signals['timers'].append(timer)
                                     self.timers.append(timer)
 
@@ -362,7 +368,7 @@ class Trigger(QTreeWidgetItem):
                         if overlay.data_model.name == category.text_overlay:
                             if self.use_text:
                                 overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category, matches=m)
-                                self.trigger_log_manager.addItem(datetime.now().strftime("%Y-%m-%d %I:%M:%S %p"), name, stripped_str)
+                                self.trigger_log_manager.addItem(datetime.now().strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
 
     def removeTimer(self, timer):
         QApplication.instance()._signals['timers'].remove(timer)

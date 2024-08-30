@@ -31,10 +31,11 @@ class TriggerLogManager(QWidget):
         time_item = QTableWidgetItem(time)
         trigger_item = QTableWidgetItem(trigger)
         text_item = QTableWidgetItem(text)
-        row_count = self.table.rowCount()
+        #row_count = self.table.rowCount()
+        row_count = 0
         self.table.insertRow(row_count)
         self.table.setItem(row_count, 0, time_item)
         self.table.setItem(row_count, 1, trigger_item)
         self.table.setItem(row_count, 2, text_item)
-        self.table.resizeColumnsToContents()        
+        self.table.resizeColumnsToContents()
         self.table.resizeRowsToContents()

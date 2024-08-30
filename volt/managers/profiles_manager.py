@@ -83,6 +83,7 @@ class ProfilesManager(QWidget):
             item.setBackground( QColor('#ffffff'))
             if item.log_file == file:
                 self.current_profile = item
+                QApplication.instance().current_profile = item
                 if self.selected_profile == None:
                     self.profile_list.setCurrentItem(item)
                     self.profileListItemClicked(item)

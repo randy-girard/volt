@@ -3,7 +3,9 @@ import os
 import signal
 import select
 import sys
+import re
 
+from datetime import datetime
 from PySide6.QtCore import QFileSystemWatcher
 from PySide6.QtWidgets import QApplication
 
@@ -40,10 +42,20 @@ class LogReader():
                 self.watcher.loop(blocking=False)
                 time.sleep(0.1)
 
+    def parse_line(self, line):
+        """
+        Parses and then returns an everquest log entry's date and text.
+        """
+        index = line.find("]") + 1
+        sdate = line[1:index - 1].strip()
+        text = line[index:].strip()
+        return datetime.strptime(sdate, '%a %b %d %H:%M:%S %Y'), text
+
     def callback(self, filename, lines):
         for line in lines:
             if(len(line.strip()) > 0):
-                QApplication.instance()._signals["logreader"].new_line.emit(line)
+                timestamp, text = self.parse_line(line)
+                QApplication.instance()._signals["logreader"].new_line.emit(timestamp, text)
 
     def init_tail_file(self, filename):
         return LogWatcher(".",

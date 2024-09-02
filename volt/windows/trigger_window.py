@@ -129,7 +129,7 @@ class TriggerWindow(QWidget):
         text_to_say_label = QLabel("Text to Say")
         self.text_to_voice_text = QLineEdit()
         self.text_to_voice_text.setText(self._trigger.text_to_voice_text)
-        self.interrupt_speech = QCheckBox("Interrupt Speed")
+        self.interrupt_speech = QCheckBox("Interrupt Speech")
         self.interrupt_speech.setChecked(self._trigger.interrupt_speech)
 
         self.play_sound_file = QRadioButton("Play Sound File")
@@ -347,7 +347,7 @@ class TriggerWindow(QWidget):
         text_to_say_label = QLabel("Text to Say")
         self.timer_ending_text_to_voice_text = QLineEdit()
         self.timer_ending_text_to_voice_text.setText(self._trigger.timer_ending_text_to_voice_text)
-        self.timer_ending_interrupt_speech = QCheckBox("Interrupt Speed")
+        self.timer_ending_interrupt_speech = QCheckBox("Interrupt Speech")
         self.timer_ending_interrupt_speech.setChecked(self._trigger.timer_ending_interrupt_speech)
 
         self.timer_ending_play_sound_file = QRadioButton("Play Sound File")
@@ -403,7 +403,7 @@ class TriggerWindow(QWidget):
         text_to_say_label = QLabel("Text to Say")
         self.timer_ended_text_to_voice_text = QLineEdit()
         self.timer_ended_text_to_voice_text.setText(self._trigger.timer_ended_text_to_voice_text)
-        self.timer_ended_interrupt_speech = QCheckBox("Interrupt Speed")
+        self.timer_ended_interrupt_speech = QCheckBox("Interrupt Speech")
         self.timer_ended_interrupt_speech.setChecked(self._trigger.timer_ended_interrupt_speech)
 
         self.timer_ended_play_sound_file = QRadioButton("Play Sound File")

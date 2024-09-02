@@ -174,8 +174,12 @@ class TriggersManager(QWidget):
         if self.selected_profile:
             triggers = self.trigger_list.findItems("*", Qt.MatchWrap | Qt.MatchWildcard | Qt.MatchRecursive);
             for trigger in triggers:
-                if type(trigger) is Trigger and trigger.checkState(0) == Qt.Checked:
-                    trigger_ids.append(trigger.trigger_id)
+                if type(trigger) is Trigger:
+                    if trigger.checkState(0) == Qt.Checked:
+                        trigger_ids.append(trigger.trigger_id)
+                        trigger.manageEvents(True)
+                    else:
+                        trigger.manageEvents(False)
             self.selected_profile.trigger_ids = trigger_ids
         QApplication.instance().save()
 
@@ -184,8 +188,6 @@ class TriggersManager(QWidget):
             child = widgetItem.child(i)
             child.setCheckState(column, is_checked)
             self.triggerListItemChangedOnChildren(child, column, is_checked)
-        if type(widgetItem) is Trigger:
-            widgetItem.manageEvents(is_checked)
 
     def triggerListItemChangedOnParents(self, widgetItem, column, is_checked):
         parent = widgetItem.parent()

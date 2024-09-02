@@ -1,4 +1,5 @@
 import re
+import time
 from playsound import playsound
 from datetime import datetime
 
@@ -36,6 +37,7 @@ class Trigger(QTreeWidgetItem):
         super().__init__()
         self.setFlags(self.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         self.setCheckState(0, checked)
+        self.is_checked = checked
 
         self.enabled = False
         self.counter = 0
@@ -121,12 +123,17 @@ class Trigger(QTreeWidgetItem):
 
     def manageEvents(self, is_checked):
         if is_checked:
+            self.is_checked = True
             if not self.enabled:
                 self.enabled = True
                 QApplication.instance()._signals["logreader"].new_line.connect(self.onLogUpdate)
         else:
+            self.is_checked = False
             self.enabled = False
-            QApplication.instance()._signals["logreader"].new_line.disconnect(self.onLogUpdate)
+            try:
+                QApplication.instance()._signals["logreader"].new_line.disconnect(self.onLogUpdate)
+            except:
+                pass
 
 
     def isChecked(self):
@@ -295,12 +302,12 @@ class Trigger(QTreeWidgetItem):
                     for timer in self.timers.copy():
                         timer.destroy()
 
-        if self.owner and self.regex_engine.expression and self.isChecked():
+        if self.owner and self.regex_engine.expression and self.is_checked:
             m = self.regex_engine.match(text)
 
-            now = datetime.utcnow().strftime('%s')
+            now = time.time()
 
-            if self.last_matched_at and int(now) > int(self.last_matched_at) + int(self.counter_duration):
+            if self.last_matched_at and now > self.last_matched_at + int(self.counter_duration):
                 self.counter = 0
 
             if m:
@@ -360,7 +367,7 @@ class Trigger(QTreeWidgetItem):
                                         duration = self.regex_engine.duration
 
                                     timer = overlay.addTimer(name, duration, trigger=self, category=category, matches=m)
-                                    self.trigger_log_manager.addItem(datetime.now().strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
+                                    self.trigger_log_manager.addItem(timestamp.strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
                                     QApplication.instance()._signals['timers'].append(timer)
                                     self.timers.append(timer)
 
@@ -368,7 +375,7 @@ class Trigger(QTreeWidgetItem):
                         if overlay.data_model.name == category.text_overlay:
                             if self.use_text:
                                 overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category, matches=m)
-                                self.trigger_log_manager.addItem(datetime.now().strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
+                                self.trigger_log_manager.addItem(timestamp.strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
 
     def removeTimer(self, timer):
         QApplication.instance()._signals['timers'].remove(timer)

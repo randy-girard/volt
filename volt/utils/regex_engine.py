@@ -3,6 +3,9 @@ import re
 from PySide6.QtWidgets import QApplication
 
 class RegexEngine():
+    REGEX_INTERGER_ONLY = re.compile("\{([0-9]?)\}")
+    REGEX_CONVERT_TAGS = re.compile("\{([A-Za-z][0-9]?)\}")
+
     def __init__(self):
         self.expression = None
         self.duration = None
@@ -14,7 +17,7 @@ class RegexEngine():
         text = text.replace("^{", "{")
         text = text.replace("${", "{")
 
-        matches = re.findall("\{([A-Za-z][0-9]?)\}", text)
+        matches = self.REGEX_CONVERT_TAGS.findall(text)
 
         if len(set(matches)) == 1 and len(matches) > 1:
             self.replace_char = matches[0]
@@ -22,7 +25,7 @@ class RegexEngine():
                 text = text.replace(f"{{{match}}}", f"(?<{match}{index+1}>.+)", 1)
 
         # Find all the {X} style tags and convert them
-        for index, match in enumerate(re.findall("\{([A-Za-z][0-9]?)\}", text)):
+        for index, match in enumerate(self.REGEX_CONVERT_TAGS.findall(text)):
             text = text.replace(f"{{{match}}}", f"(?<{match}>.+)", 1)
 
         # Replace timestamp matcher
@@ -39,7 +42,7 @@ class RegexEngine():
 
 
     def match(self, text):
-        self.m = re.search(self.expression, text)
+        self.m = self.expression.search(text)
         return self.m
 
     def to_seconds(self, timestr):
@@ -57,7 +60,7 @@ class RegexEngine():
             text = text.replace("${", "{")
 
             # Replace integer only match tags
-            for index, match in enumerate(re.findall("\{([0-9]?)\}", text)):
+            for index, match in enumerate(self.REGEX_INTERGER_ONLY.findall(text)):
                 text = text.replace(f"{{{match}}}", f"{{{self.replace_char}{match}}}", 1)
 
             # Replace the matches

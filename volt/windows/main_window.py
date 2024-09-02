@@ -40,7 +40,7 @@ class MainWindow(QWidget):
 
         self.config_manager = ConfigManager(self)
         QApplication.instance().config_manager = self.config_manager
-        
+
         self.home_manager = HomeManager(self)
         self.profiles_manager = self.home_manager.profiles_manager
         self.triggers_manager = self.home_manager.triggers_manager
@@ -60,14 +60,25 @@ class MainWindow(QWidget):
 
         self.log_monitor = LogMonitor(self.profiles_manager)
 
+        self.toggle_lock_overlays = False
         self.focusManager = QTimer()
         self.focusManager.timeout.connect(self.onUpdateFocus)
-        #self.focusManager.start(100)
 
         self.attachToWindows = [
             "everquest",
             "project1999"
         ]
+
+    def toggleLockOverlays(self, event):
+        if self.toggle_lock_overlays:
+            self.toggle_lock_overlays = False
+            self.focusManager.stop()
+            self.overlays_manager.showAllOverlayWindows();
+            self.home_manager.button7.setText("Lock Overlays")
+        else:
+            self.toggle_lock_overlays = True
+            self.focusManager.start(100)
+            self.home_manager.button7.setText("Unlock Overlays")
 
     def onUpdateFocus(self):
         active_window_name = None

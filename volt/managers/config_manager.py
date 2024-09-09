@@ -1,4 +1,5 @@
-import json
+#import json
+import ujson as json
 import sys
 import os
 import xml.etree.ElementTree as ET

@@ -39,7 +39,10 @@ class Speaker():
         if platform.system() == "Darwin":
             self.driver_name = 'nsss'
 
-        self.engine = pyttsx3.init(driverName=self.driver_name)
+        if platform.system() == "Windows":
+            self.engine = pyttsx3.init(driverName=self.driver_name)
+        elif platform.system() == "Darwin":
+            self.engine = True
 
     def say(self, text):
         if self.engine:

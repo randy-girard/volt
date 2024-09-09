@@ -48,7 +48,10 @@ class RegexEngine():
     def to_seconds(self, timestr):
         seconds= 0
         for part in timestr.split(':'):
-            seconds= seconds*60 + int(part, 10)
+            try:
+                seconds = seconds*60 + int(part, 10)
+            except:
+                pass
         return seconds
 
     def execute(self, text, matches=None):

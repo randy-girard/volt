@@ -123,7 +123,12 @@ class MainWindow(QWidget):
 
     def destroy(self):
         QApplication.instance().quit()
-        QApplication.instance()._map.deleteLater()
+
+        try:
+            QApplication.instance()._map.deleteLater()
+        except:
+            pass
+            
         self.speaker.stop()
         self.log_monitor.stop()
         self.profiles_manager.logreader.stop()

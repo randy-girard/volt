@@ -7,3 +7,7 @@ shiboken6
 Pillow
 py3-tts
 ujson
+
+# nparse
+pathvalidate
+colorhash

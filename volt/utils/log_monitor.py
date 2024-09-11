@@ -8,10 +8,10 @@ from volt.utils.log_watcher import LogWatcher
 from threading import Thread
 from threading import Event
 
-from PyQt6.QtCore import QFileSystemWatcher, pyqtSignal
+from PySide6.QtCore import QFileSystemWatcher, Signal
 
 class LogMonitor(QFileSystemWatcher):
-    new_line = pyqtSignal(object)
+    new_line = Signal(object)
 
     def __init__(self, profiles_manager):
         super().__init__()

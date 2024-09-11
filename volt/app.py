@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from volt.windows import main_window
+from volt.utils.helpers import resource_path
 from volt.utils.log_reader_signals import LogReaderSignals
 from volt.utils.regex_engine import RegexEngine
 
@@ -15,9 +16,10 @@ try:
     from plugins.nParse.parsers.maps.window import MapsSignals
     from plugins.nParse.parsers.discord import Discord
 
-    config.load('nparse.config.json')
+    config.load(resource_path('data/nparse.config.json'))
     config.verify_settings()
-except ImportError:
+except ImportError as ex:
+    print(ex)
     pass
 
 class App(QApplication):

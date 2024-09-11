@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 
 from PySide6.QtWidgets import QApplication, QWidget, QFileDialog
 
+from volt.utils.helpers import resource_path
 from volt.models.trigger_group import TriggerGroup
 from volt.models.trigger import Trigger
 from volt.models.category import Category
@@ -34,18 +35,18 @@ class ConfigManager(QWidget):
         }
 
         json_out = json.dumps(config, indent=4)
-        with open(self._parent.application_path + "/config.json", "w") as outfile:
+        with open(resource_path("data/config.json"), "w") as outfile:
             outfile.write(json_out)
 
 
     def load(self):
-        if not os.path.isfile(self._parent.application_path + "/config.json"):
+        if not os.path.isfile(resource_path("data/config.json")):
             json_out = json.dumps({}, indent=4)
-            with open(self._parent.application_path + "/config.json", "w") as outfile:
+            with open(resource_path("data/config.json"), "w") as outfile:
                 outfile.write(json_out)
 
 
-        with open(self._parent.application_path + "/config.json", 'r') as openfile:
+        with open(resource_path("data/config.json"), 'r') as openfile:
             json_object = json.load(openfile)
 
             self.setGeometry(json_object.get("left", 10),

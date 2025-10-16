@@ -25,15 +25,17 @@ class HomeManager(QWidget):
         button5 = QPushButton("Import GINA Config")
         button6 = QPushButton("Import spells_us.txt")
         self.button7 = QPushButton("Lock Overlays")
+        button8 = QPushButton("Toggle DPS")
 
         button4.clicked.connect(self._parent.config_manager.toggleMap)
         button5.clicked.connect(self._parent.config_manager.importGinaConfig)
         button6.clicked.connect(self._parent.config_manager.importSpellsUsConfig)
         self.button7.clicked.connect(self._parent.toggleLockOverlays)
-
+        button8.clicked.connect(self._parent.config_manager.toggleDps)
         self.home_layout.addWidget(button4, 1, 3)
         self.home_layout.addWidget(button5, 2, 3)
         self.home_layout.addWidget(self.button7, 3, 3)
+        self.home_layout.addWidget(button8, 1, 4)
         #self.home_layout.addWidget(button7, 2, 4)
 
         self.home_tab.setLayout(self.home_layout)

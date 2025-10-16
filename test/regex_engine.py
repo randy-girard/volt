@@ -121,3 +121,18 @@ class RegexEngineTest(unittest.TestCase):
         result = engine.execute("{S}", matches=matches)
         self.assertEqual(engine.duration, 600)
         self.assertEqual(result, "something")
+
+    def test_neg_lookahead_matching(self):
+        regex = "^(?!a skeleton )(.+?) has been slain by"
+
+        engine1 = RegexEngine()
+        engine1.compile(regex)
+        matches = engine1.match("a cat has been slain by Bob!")
+        result = engine1.execute("${1}", matches=matches)
+        self.assertEqual(result, "a cat")
+
+        engine2 = RegexEngine()
+        engine2.compile(regex)
+        matches = engine2.match("a skeleton has been slain by Bob!")
+        result = engine2.execute("${1}", matches=matches)
+        self.assertEqual(result, None)

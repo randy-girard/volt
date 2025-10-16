@@ -45,7 +45,7 @@ class Speaker():
             self.engine = True
 
     def say(self, text):
-        if self.engine:
+        if self.engine and text:
             self.stop()
 
             if platform.system() == "Darwin":

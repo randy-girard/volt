@@ -10,17 +10,20 @@ from volt.utils.log_reader_signals import LogReaderSignals
 from volt.utils.regex_engine import RegexEngine
 
 try:
-    from plugins.nParse.helpers import resource_path, config
-    from plugins.nParse.helpers.settings import SettingsSignals
-    from plugins.nParse.parsers.maps import Maps
-    from plugins.nParse.parsers.maps.window import MapsSignals
-    from plugins.nParse.parsers.discord import Discord
+   from plugins.nParse.helpers import resource_path, config
+   from plugins.nParse.helpers.settings import SettingsSignals
+   from plugins.nParse.parsers.maps import Maps
+   from plugins.nParse.parsers.maps.window import MapsSignals
+   from plugins.nParse.parsers.discord import Discord
+   from plugins.nParse.parsers.spells import Spells
 
-    config.load(resource_path('data/nparse.config.json'))
-    config.verify_settings()
+   config.load(resource_path('data/nparse.config.json'))
+   config.verify_settings()
+
+   from plugins.dps.dps_window import DpsWindow
 except ImportError as ex:
-    print(ex)
-    pass
+   print(ex)
+   pass
 
 class App(QApplication):
     def __init__(self, *args):
@@ -40,10 +43,22 @@ class App(QApplication):
             self._signals['maps'] = MapsSignals()
             QApplication.instance()._discord = Discord()
             QApplication.instance()._map = Maps()
+            #QApplication.instance()._spells = Spells()
             QApplication.instance()._signals["logreader"].new_line.connect(
                 QApplication.instance()._map.parse
             )
+            #QApplication.instance()._signals["logreader"].new_line.connect(
+            #    QApplication.instance()._spells.parse
+            #)
             self.setStyleSheet(open(resource_path(os.path.join('data', 'ui', '_.css'))).read())
+        except:
+            pass
+
+        try:
+            QApplication.instance()._dps = DpsWindow()
+            QApplication.instance()._signals["logreader"].new_line.connect(
+                QApplication.instance()._dps.parse
+            )
         except:
             pass
 

@@ -22,6 +22,9 @@ class ConfigManager(QWidget):
     def toggleMap(self):
         QApplication.instance()._map.toggle()
 
+    def toggleDps(self):
+        QApplication.instance()._dps.toggle()
+
     def save(self):
         config = {
             "top": self._parent.geometry().y(),

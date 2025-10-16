@@ -1,12 +1,14 @@
-PySide6==6.5.1.1
+pyside6-essentials
 sip
 pyobjc; sys_platform == 'darwin'
 playsound==1.2.2
 portalocker
-shiboken6
+shiboken6==6.5.1.1
 Pillow
 py3-tts
 ujson
+numpy<2
+pyqtgraph
 
 # nparse
 pathvalidate

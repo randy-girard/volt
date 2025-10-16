@@ -86,7 +86,7 @@ class ProfilesManager(QWidget):
                 QApplication.instance().current_profile = item
                 if self.selected_profile == None:
                     self.profile_list.setCurrentItem(item)
-                    self.profileListItemClicked(item)
+                self.profileListItemClicked(item)
 
                 item.setBackground( QColor('#7fc97f') )
 

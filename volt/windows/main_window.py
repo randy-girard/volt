@@ -126,9 +126,10 @@ class MainWindow(QWidget):
 
         try:
             QApplication.instance()._map.deleteLater()
+            QApplication.instance()._dps.deleteLater()
         except:
             pass
-            
+
         self.speaker.stop()
         self.log_monitor.stop()
         self.profiles_manager.logreader.stop()

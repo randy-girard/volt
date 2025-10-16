@@ -349,8 +349,6 @@ class Trigger(QTreeWidgetItem):
                                 if len(self.timers) > 0:
                                     if self.timer_start_behavior == "Restart current timer":
                                         for timer in self.timers:
-                                            timer.label = name
-
                                             if self.restart_timer_matches:
                                                 if timer.label == name:
                                                     timer.restartTimer()
@@ -374,7 +372,11 @@ class Trigger(QTreeWidgetItem):
                     for overlay in self.text_overlays:
                         if overlay.data_model.name == category.text_overlay:
                             if self.use_text:
-                                overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category, matches=m)
+                                display_text = self.display_text
+                                for key, value in self.variable_values.items():
+                                    display_text = display_text.replace(f"{{var:{key}}}", str(value))
+
+                                overlay.addTextTrigger(self.regex_engine.execute(display_text, matches=m), category=category, matches=m)
                                 self.trigger_log_manager.addItem(timestamp.strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
 
     def removeTimer(self, timer):

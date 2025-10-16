@@ -55,6 +55,9 @@ class RegexEngine():
         return seconds
 
     def execute(self, text, matches=None):
+        if matches == None:
+            return None
+
         counts = {}
 
         if text and len(text) > 0:

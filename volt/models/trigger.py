@@ -27,6 +27,9 @@ class Trigger(QTreeWidgetItem):
                        variables=[],
                        counter_duration=0,
                        reset_counter_if_unmatched=False,
+                       use_webhook=False,
+                       webhook_id=None,
+                       webhook_message="",
                        parent=None,
                        trigger_group=None,
                        checked=Qt.CheckState.Unchecked,
@@ -106,6 +109,10 @@ class Trigger(QTreeWidgetItem):
 
         self.counter_duration = counter_duration
         self.reset_counter_if_unmatched = reset_counter_if_unmatched
+
+        self.use_webhook = use_webhook
+        self.webhook_id = webhook_id
+        self.webhook_message = webhook_message
 
         self.compileExpressions()
 
@@ -204,6 +211,15 @@ class Trigger(QTreeWidgetItem):
     def setSoundFilePath(self, val):
         self.sound_file_path = val
 
+    def setUseWebhook(self, val):
+        self.use_webhook = val
+
+    def setWebhookId(self, val):
+        self.webhook_id = val
+
+    def setWebhookMessage(self, val):
+        self.webhook_message = val
+
     def serialize(self):
         hash = {
             "type": "Trigger",
@@ -246,6 +262,9 @@ class Trigger(QTreeWidgetItem):
             "variables": self.variables,
             "counter_duration": self.counter_duration,
             "reset_counter_if_unmatched": self.reset_counter_if_unmatched,
+            "use_webhook": self.use_webhook,
+            "webhook_id": self.webhook_id,
+            "webhook_message": self.webhook_message,
             "checked": self.checkStateToInt(self.checkState(0))
         }
         return hash
@@ -342,6 +361,10 @@ class Trigger(QTreeWidgetItem):
                     path = self.sound_file_path
                     playsound(path, False)
 
+                # Execute webhook if enabled
+                if self.use_webhook and self.webhook_id:
+                    self._execute_webhook(m)
+
                 categories = self.category_list.findItems(self.category, Qt.MatchExactly)
                 for category in categories:
                     if name and len(name) > 0:
@@ -381,6 +404,41 @@ class Trigger(QTreeWidgetItem):
 
                                 overlay.addTextTrigger(self.regex_engine.execute(display_text, matches=m), category=category, matches=m)
                                 self.trigger_log_manager.addItem(timestamp.strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
+
+    def _execute_webhook(self, matches):
+        """Execute webhook with variable substitution"""
+        try:
+            # Get webhooks manager
+            webhooks_manager = self.owner._parent.webhooks_manager
+
+            # Get the webhook by ID
+            webhook = webhooks_manager.getWebhookById(self.webhook_id)
+
+            if not webhook:
+                print(f"Webhook with ID {self.webhook_id} not found")
+                return
+
+            # Process the message with variable substitution
+            message = self.webhook_message
+
+            # Use regex engine to substitute variables like {S}, {C}, {1}, {2}, etc.
+            message = self.regex_engine.execute(message, matches=matches)
+
+            # Replace counter variables
+            if message:
+                message = message.replace("{COUNTER}", str(self.counter))
+                message = message.replace("{counter}", str(self.counter))
+
+                # Replace custom variables
+                for key, value in self.variable_values.items():
+                    message = message.replace(f"{{var:{key}}}", str(value))
+
+            # Send the webhook
+            from volt.utils.webhook_executor import WebhookExecutor
+            WebhookExecutor.send_webhook(webhook, message, async_mode=True)
+
+        except Exception as e:
+            print(f"Error executing webhook: {str(e)}")
 
     def removeTimer(self, timer):
         QApplication.instance()._signals['timers'].remove(timer)

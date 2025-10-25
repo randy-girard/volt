@@ -4,6 +4,7 @@ from PySide6.QtGui import QStandardItemModel
 
 from volt.managers.profiles_manager import ProfilesManager
 from volt.managers.triggers_manager import TriggersManager
+from volt.managers.webhooks_manager import WebhooksManager
 from volt.managers.config_manager import ConfigManager
 
 class HomeManager(QWidget):
@@ -20,6 +21,12 @@ class HomeManager(QWidget):
 
         self.profiles_manager = ProfilesManager(self)
         self.triggers_manager = TriggersManager(self)
+        self.webhooks_manager = WebhooksManager(self)
+
+        # Add webhook buttons to layout (column 5)
+        self.home_layout.addWidget(self.webhooks_manager.button, 1, 5)
+        self.home_layout.addWidget(self.webhooks_manager.buttona, 2, 5)
+        self.home_layout.addWidget(self.webhooks_manager.buttonb, 3, 5)
 
         button4 = QPushButton("Toggle Map")
         button5 = QPushButton("Import GINA Config")
@@ -43,3 +50,4 @@ class HomeManager(QWidget):
     def load(self, json):
         self.profiles_manager.load(json.get("profiles", []))
         self.triggers_manager.load(json.get("trigger_groups", []))
+        self.webhooks_manager.load(json.get("webhooks", []))

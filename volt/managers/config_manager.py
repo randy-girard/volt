@@ -34,7 +34,8 @@ class ConfigManager(QWidget):
             "profiles": self._parent.profiles_manager.serialize(),
             "overlays": self._parent.overlays_manager.serialize(),
             "trigger_groups": self._parent.triggers_manager.serialize(),
-            "categories": self._parent.categories_manager.serialize()
+            "categories": self._parent.categories_manager.serialize(),
+            "webhooks": self._parent.webhooks_manager.serialize()
         }
 
         json_out = json.dumps(config, indent=4)

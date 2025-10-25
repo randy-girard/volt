@@ -44,12 +44,14 @@ class MainWindow(QWidget):
         self.home_manager = HomeManager(self)
         self.profiles_manager = self.home_manager.profiles_manager
         self.triggers_manager = self.home_manager.triggers_manager
+        self.webhooks_manager = self.home_manager.webhooks_manager
         self.categories_manager = CategoriesManager(self)
         self.overlays_manager = OverlaysManager(self)
         self.trigger_log_manager = TriggerLogManager(self)
 
         self.main_layout.addWidget(self.profiles_manager.profile_list)
         self.main_layout.addWidget(self.triggers_manager.trigger_list)
+        self.main_layout.addWidget(self.webhooks_manager.webhook_list)
 
         self.setLayout(self.layout)
 

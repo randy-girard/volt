@@ -149,6 +149,11 @@ class Timer(QWidget):
         self.parent.triggers.remove(self)
         self.removeFromLayout()
         self.trigger.removeTimer(self)
+        try:
+            QApplication.instance()._signals['timers'].remove(self)
+        except (ValueError, AttributeError):
+            pass
+        self.parent = None
         self.deleteLater()
 
     def notifyEnding(self):

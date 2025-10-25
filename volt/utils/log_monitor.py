@@ -36,7 +36,13 @@ class LogMonitor(QFileSystemWatcher):
             self._watcher.removePath(log_file)
 
     def stop(self):
-        self._watcher = None
+        if self._watcher:
+            try:
+                self._watcher.fileChanged.disconnect(self._file_changed_safe_wrap)
+            except:
+                pass
+            self._watcher.deleteLater()
+            self._watcher = None
 
     def _file_changed_safe_wrap(self, changed_file):
         try:

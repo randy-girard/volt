@@ -72,7 +72,13 @@ class TextTrigger(QLabel):
 
     def destroy(self):
         self.timer.stop()
+        try:
+            self.signal.disconnect(self.onUpdate)
+            self.timer.timeout.disconnect(self.onUpdateEmit)
+        except:
+            pass
         self.parent.triggers.remove(self)
         self.removeFromLayout()
         self.setParent(None)
-        self = None
+        self.parent = None
+        self.deleteLater()

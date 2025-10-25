@@ -253,6 +253,9 @@ class Trigger(QTreeWidgetItem):
     def compileExpressions(self):
         self.regex_engine_enders = []
         self.regex_variables = []
+        self.regex_engine_enders.clear()
+        self.regex_variables.clear()
+        
         search_text = self.search_text
 
         if not self.use_regex:

@@ -9,6 +9,7 @@ py3-tts
 ujson
 numpy<2
 pyqtgraph
+watchdog
 
 # nparse
 pathvalidate

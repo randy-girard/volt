@@ -112,6 +112,7 @@ class TriggersManager(QWidget):
                                checked=item.get("checked", 0),
                                reset_counter_if_unmatched=bool(item.get("reset_counter_if_unmatched", False)),
                                counter_duration=int(item.get("counter_duration", 0)),
+                               cooldown_duration=float(item.get("cooldown_duration", 0)),
                                use_webhook=bool(item.get("use_webhook", False)),
                                webhook_id=item.get("webhook_id"),
                                webhook_message=item.get("webhook_message", ""))

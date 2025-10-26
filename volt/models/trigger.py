@@ -27,6 +27,7 @@ class Trigger(QTreeWidgetItem):
                        variables=[],
                        counter_duration=0,
                        reset_counter_if_unmatched=False,
+                       cooldown_duration=0,
                        use_webhook=False,
                        webhook_id=None,
                        webhook_message="",
@@ -45,6 +46,7 @@ class Trigger(QTreeWidgetItem):
         self.enabled = False
         self.counter = 0
         self.last_matched_at = None
+        self.last_fired_at = None  # Track when trigger last fired for cooldown
         self.search_text = search_text
         self.use_regex = use_regex
         self.owner = parent
@@ -109,6 +111,8 @@ class Trigger(QTreeWidgetItem):
 
         self.counter_duration = counter_duration
         self.reset_counter_if_unmatched = reset_counter_if_unmatched
+
+        self.cooldown_duration = cooldown_duration
 
         self.use_webhook = use_webhook
         self.webhook_id = webhook_id
@@ -220,6 +224,9 @@ class Trigger(QTreeWidgetItem):
     def setWebhookMessage(self, val):
         self.webhook_message = val
 
+    def setCooldownDuration(self, val):
+        self.cooldown_duration = float(val)
+
     def serialize(self):
         hash = {
             "type": "Trigger",
@@ -262,6 +269,7 @@ class Trigger(QTreeWidgetItem):
             "variables": self.variables,
             "counter_duration": self.counter_duration,
             "reset_counter_if_unmatched": self.reset_counter_if_unmatched,
+            "cooldown_duration": self.cooldown_duration,
             "use_webhook": self.use_webhook,
             "webhook_id": self.webhook_id,
             "webhook_message": self.webhook_message,
@@ -334,6 +342,16 @@ class Trigger(QTreeWidgetItem):
 
             if m:
                 self.last_matched_at = now
+
+                # Check cooldown - if cooldown is active, ignore this trigger
+                if self.cooldown_duration > 0 and self.last_fired_at:
+                    time_since_last_fire = now - self.last_fired_at
+                    if time_since_last_fire < self.cooldown_duration:
+                        # Cooldown is still active, ignore this trigger
+                        return
+
+                # Update last fired timestamp
+                self.last_fired_at = now
 
                 name = self.timer_name
                 name = self.regex_engine.execute(name, matches=m)

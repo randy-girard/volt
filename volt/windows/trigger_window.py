@@ -153,6 +153,56 @@ class TriggerWindow(QWidget):
         box2.setLayout(audio_settings_layout)
         layout.addWidget(box2)
 
+        # Cooldown Settings
+        box3 = QGroupBox("Cooldown Settings")
+        cooldown_help = QLabel("Prevent trigger from firing again for the specified duration after it fires")
+        cooldown_help.setStyleSheet("color: gray; font-style: italic; font-size: 10px;")
+
+        # Calculate hours, minutes, seconds from cooldown_duration
+        cooldown_seconds = self._trigger.cooldown_duration % (24 * 3600)
+        cooldown_hours = cooldown_seconds // 3600
+        cooldown_seconds %= 3600
+        cooldown_minutes = cooldown_seconds // 60
+        cooldown_seconds %= 60
+
+        cooldown_layout = QGridLayout()
+        cooldown_layout.addWidget(cooldown_help, 0, 0, 1, 4)
+
+        cooldown_duration_layout = QHBoxLayout()
+        cooldown_duration_layout.setAlignment(Qt.AlignLeft)
+
+        self.cooldown_h_input = QLineEdit(self)
+        self.cooldown_h_input.setText(str(int(cooldown_hours)))
+        self.cooldown_h_input.setFixedWidth(40)
+        cooldown_h_label = QLabel("h")
+        cooldown_h_label.setFixedWidth(15)
+
+        self.cooldown_m_input = QLineEdit(self)
+        self.cooldown_m_input.setText(str(int(cooldown_minutes)))
+        self.cooldown_m_input.setFixedWidth(40)
+        cooldown_m_label = QLabel("m")
+        cooldown_m_label.setFixedWidth(15)
+
+        self.cooldown_s_input = QLineEdit(self)
+        self.cooldown_s_input.setText(str(int(cooldown_seconds)))
+        self.cooldown_s_input.setFixedWidth(40)
+        cooldown_s_label = QLabel("s")
+        cooldown_s_label.setFixedWidth(15)
+
+        cooldown_duration_layout.addWidget(QLabel("Cooldown Duration:"))
+        cooldown_duration_layout.addWidget(self.cooldown_h_input)
+        cooldown_duration_layout.addWidget(cooldown_h_label)
+        cooldown_duration_layout.addWidget(self.cooldown_m_input)
+        cooldown_duration_layout.addWidget(cooldown_m_label)
+        cooldown_duration_layout.addWidget(self.cooldown_s_input)
+        cooldown_duration_layout.addWidget(cooldown_s_label)
+        cooldown_duration_layout.addStretch()
+
+        cooldown_layout.addLayout(cooldown_duration_layout, 1, 0, 1, 4)
+
+        box3.setLayout(cooldown_layout)
+        layout.addWidget(box3)
+
         self.basic_tab.setLayout(layout)
 
         return self.basic_tab
@@ -667,6 +717,11 @@ class TriggerWindow(QWidget):
         self._trigger.reset_counter_if_unmatched = self.reset_counter.isChecked()
         self._trigger.counter_duration = counter_duration
 
+        # Save cooldown duration
+        cooldown_duration = int(self.cooldown_h_input.text() or 0) * 60 * 60
+        cooldown_duration += int(self.cooldown_m_input.text() or 0) * 60
+        cooldown_duration += int(self.cooldown_s_input.text() or 0)
+        self._trigger.setCooldownDuration(cooldown_duration)
 
         self._trigger.timer_end_early_triggers = []
         for row in range(self.end_early_triggers.rowCount()):

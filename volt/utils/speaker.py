@@ -58,6 +58,8 @@ class Speaker():
         if platform.system() == "Darwin":
             if self.proc:
                 self.proc.terminate()
+                self.proc.wait()
+                self.proc = None
         elif platform.system() == "Windows":
             if self.engine:
                 self.engine.proxy._driver._tts.Skip('Sentence', 2147483647)

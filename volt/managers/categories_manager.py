@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QGridLayout, QHBoxLayout, QPushButton, QListWidget, QWidget, QLabel, QComboBox, QLineEdit
+from PySide6.QtWidgets import QApplication, QWidget, QGridLayout, QHBoxLayout, QPushButton, QListWidget, QWidget, QLabel, QComboBox, QLineEdit
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
 
@@ -113,11 +113,14 @@ class CategoriesManager(QWidget):
         item.timer_font_color = self.timer_color_picker_font.color()
         item.timer_bar_color = self.timer_color_picker_bar.color()
         item.text_font_color = self.text_color_picker_font.color()
+        QApplication.instance().save()
 
     def addCategory(self, event):
         category = Category(name="New Category")
         self.category_list.addItem(category)
+        QApplication.instance().save()
 
     def removeCategory(self, event):
         item = self.category_list.currentItem()
         self.category_list.takeItem(self.category_list.row(item))
+        QApplication.instance().save()

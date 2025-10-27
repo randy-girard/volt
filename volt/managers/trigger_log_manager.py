@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QGridLayout, QTableWidget, QTableWidgetItem, QHeaderView
+from PySide6.QtWidgets import QApplication, QWidget, QGridLayout, QTableWidget, QTableWidgetItem, QHeaderView
 from PySide6.QtCore import Qt
 
 class TriggerLogManager(QWidget):
@@ -21,6 +21,8 @@ class TriggerLogManager(QWidget):
         self.table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
 
         self.layout.addWidget(self.table)
         self.tab.setLayout(self.layout)
@@ -29,9 +31,11 @@ class TriggerLogManager(QWidget):
         time_item = QTableWidgetItem(time)
         trigger_item = QTableWidgetItem(trigger)
         text_item = QTableWidgetItem(text)
-        row_count = self.table.rowCount()
+        #row_count = self.table.rowCount()
+        row_count = 0
         self.table.insertRow(row_count)
         self.table.setItem(row_count, 0, time_item)
         self.table.setItem(row_count, 1, trigger_item)
         self.table.setItem(row_count, 2, text_item)
+        self.table.resizeColumnsToContents()
         self.table.resizeRowsToContents()

@@ -1,10 +1,13 @@
 import time
+import re
 
 from PySide6.QtWidgets import QApplication, QProgressBar, QSizePolicy, QWidget, QVBoxLayout
 from PySide6.QtCore import Signal, Slot, QObject, Qt, QTimer, QPropertyAnimation
 from PySide6.QtGui import QFont
 
 class Timer(QWidget):
+    RESOLUTION = 200
+
     signal = Signal()
 
     def __init__(self, parent, label, duration, trigger=None, category=None, matches=None):
@@ -22,7 +25,7 @@ class Timer(QWidget):
         self.layout.setSpacing(1)
         self.layout.setContentsMargins(0, 0, 0, 1);
 
-        self.pbar = QProgressBar()
+        self.pbar = QProgressBar(self)
         self.pbar.setMinimum(0)
         self.pbar.setMaximum(1000)
         self.pbar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -53,11 +56,16 @@ class Timer(QWidget):
         #self.timer.setEndValue(0)
         #self.timer.start()
 
+        timer_update_ms = int(self.duration * 1000 / Timer.RESOLUTION)
+        if timer_update_ms < 50:
+            timer_update_ms = 50
+        if timer_update_ms > 1000:
+            timer_update_ms = 1000
+
         self.timer = QTimer()
         self.timer.timeout.connect(self.onUpdate)
-        self.timer.start(50)
+        self.timer.start(timer_update_ms)
         self.layout.addWidget(self.pbar)
-        #self.parent.layout.addWidget(self.pbar)
 
     def updateFont(self):
         font = QFont(self.parent.data_model.font, self.parent.data_model.font_size)
@@ -82,10 +90,12 @@ class Timer(QWidget):
     def sortValue(self):
         if self.parent.data_model.sort_method == "Time Remaining":
             return self.endtime - (time.time() * 1000)
+        elif self.parent.data_model.sort_method[:10] == "Timer Text":
+            return [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', self.label)]
         else:
             return self.starttime
 
-    #def onUpdate(self, value):
+
     def onUpdate(self):
         done = False
         current_time = time.time() * 1000
@@ -139,12 +149,19 @@ class Timer(QWidget):
         self.parent.triggers.remove(self)
         self.removeFromLayout()
         self.trigger.removeTimer(self)
+        try:
+            QApplication.instance()._signals['timers'].remove(self)
+        except (ValueError, AttributeError):
+            pass
+        self.parent = None
+        self.deleteLater()
 
     def notifyEnding(self):
         if self.trigger.notify_ending:
             for overlay in self.trigger.text_overlays:
                 if overlay.data_model.name == self.category.text_overlay:
                     if self.trigger.timer_ending_use_text:
+                        display_text = self.trigger.regex_engine.execute(self.trigger.timer_ending_display_text, self.matches)
                         overlay.addTextTrigger(self.trigger.timer_ending_display_text)
 
             if self.trigger.timer_ending_interrupt_speech:
@@ -166,7 +183,8 @@ class Timer(QWidget):
             for overlay in self.trigger.text_overlays:
                 if overlay.data_model.name == self.category.text_overlay:
                     if self.trigger.timer_ended_use_text:
-                        overlay.addTextTrigger(self.trigger.timer_ended_display_text)
+                        display_text = self.trigger.regex_engine.execute(self.trigger.timer_ended_display_text, self.matches)
+                        overlay.addTextTrigger(display_text)
 
             if self.trigger.timer_ended_interrupt_speech:
                 self.trigger.speaker.stop()
@@ -174,7 +192,7 @@ class Timer(QWidget):
             if self.trigger.timer_ended_use_text_to_voice:
                 text_to_say = self.trigger.timer_ended_text_to_voice_text
                 if self.trigger.profiles_manager.current_profile:
-                    text_to_say = self.trigger.regex_engine.execute(text_to_say)
+                    text_to_say = self.trigger.regex_engine.execute(text_to_say, self.matches)
                 self.trigger.speaker.say(text_to_say)
 
             if self.trigger.timer_ended_play_sound_file:

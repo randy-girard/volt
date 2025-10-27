@@ -2,10 +2,11 @@ from PySide6.QtWidgets import QTreeWidgetItem
 from PySide6.QtCore import Qt
 
 class TriggerGroup(QTreeWidgetItem):
-    def __init__(self, name="", comments="", group_id=None, checked=Qt.CheckState.Unchecked):
+    def __init__(self, name="", trigger_group=None, comments="", group_id=None, checked=Qt.CheckState.Unchecked):
         checked = self.fromCheckState(checked)
 
         super().__init__()
+        self.setTriggerGroup(trigger_group)
         self.setFlags(self.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         self.setCheckState(0, checked)
         self.setName(name)
@@ -16,6 +17,17 @@ class TriggerGroup(QTreeWidgetItem):
     def setName(self, val):
         self.name = val
         self.setText(0, val)
+
+    def getFullTriggerName(self):
+        name = ""
+        if self.trigger_group:
+            name = self.trigger_group.getFullTriggerName()
+            return name + " / " + self.name
+        else:
+            return self.name
+
+    def setTriggerGroup(self, trigger_group):
+        self.trigger_group = trigger_group
 
     def setComments(self, val):
         self.comments = val

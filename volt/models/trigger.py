@@ -1,8 +1,9 @@
 import re
-
+import time
 from playsound import playsound
 from datetime import datetime
 
+from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import QTreeWidgetItem
 from PySide6.QtCore import Signal, Slot, Qt
 
@@ -23,13 +24,38 @@ class Trigger(QTreeWidgetItem):
                        timer_ended_text_to_voice_text="", timer_ended_interrupt_speech=False,
                        timer_ended_play_sound_file=False, timer_ended_sound_file_path="",
                        timer_end_early_triggers=[],
-                       parent=None):
+                       variables=[],
+                       counter_duration=0,
+                       reset_counter_if_unmatched=False,
+                       cooldown_duration=0,
+                       use_webhook=False,
+                       webhook_id=None,
+                       webhook_message="",
+                       parent=None,
+                       trigger_group=None,
+                       checked=Qt.CheckState.Unchecked,
+                       trigger_id=None):
+
+        checked = self.fromCheckState(checked)
+
         super().__init__()
+        self.setFlags(self.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+        self.setCheckState(0, checked)
+        self.is_checked = checked
+
+        self.enabled = False
+        self.counter = 0
+        self.last_matched_at = None
+        self.last_fired_at = None  # Track when trigger last fired for cooldown
         self.search_text = search_text
         self.use_regex = use_regex
         self.owner = parent
+        self.trigger_id = trigger_id
+        if self.trigger_id == None:
+            self.trigger_id = id(self)
         self.last_timer = None
         self.timers = []
+        self.variable_values = {}
 
         # TODO: Fix this deep accessing
         self.speaker = self.owner._parent.speaker
@@ -39,10 +65,11 @@ class Trigger(QTreeWidgetItem):
         self.profiles_manager = self.owner._parent.profiles_manager
         self.trigger_log_manager = self.owner._parent.trigger_log_manager
 
-        self.regex_engine = RegexEngine(self.profiles_manager.current_profile)
+        self.regex_engine = RegexEngine()
         self.regex_engine_enders = []
 
         self.setName(name)
+        self.setTriggerGroup(trigger_group)
         self.setTimerName(timer_name)
         self.setDuration(duration)
         self.setCategory(category)
@@ -80,7 +107,67 @@ class Trigger(QTreeWidgetItem):
 
         self.timer_end_early_triggers = timer_end_early_triggers
 
+        self.variables = variables
+
+        self.counter_duration = counter_duration
+        self.reset_counter_if_unmatched = reset_counter_if_unmatched
+
+        self.cooldown_duration = cooldown_duration
+
+        self.use_webhook = use_webhook
+        self.webhook_id = webhook_id
+        self.webhook_message = webhook_message
+
         self.compileExpressions()
+
+    def setTriggerGroup(self, trigger_group):
+        self.trigger_group = trigger_group
+
+    def getFullTriggerName(self):
+        if self.trigger_group:
+            name = self.trigger_group.getFullTriggerName()
+            return name + " / " + self.name
+        else:
+            return self.name
+
+
+
+    def manageEvents(self, is_checked):
+        if is_checked:
+            self.is_checked = True
+            if not self.enabled:
+                self.enabled = True
+                QApplication.instance()._signals["logreader"].new_line.connect(self.onLogUpdate)
+        else:
+            self.is_checked = False
+            self.enabled = False
+            try:
+                QApplication.instance()._signals["logreader"].new_line.disconnect(self.onLogUpdate)
+            except:
+                pass
+
+
+    def isChecked(self):
+        return self.checkState(0) == Qt.CheckState.Checked
+
+    def fromCheckState(self, checkState):
+        if checkState == 0:
+            return Qt.CheckState.Unchecked
+        elif checkState == 1:
+            return Qt.CheckState.PartiallyChecked
+        elif checkState == 2:
+            return Qt.CheckState.Checked
+        else:
+            return checkState
+
+    def checkStateToInt(self, checkState):
+        if checkState == Qt.CheckState.Unchecked:
+            return 0
+        if checkState == Qt.CheckState.PartiallyChecked:
+            return 1
+        if checkState == Qt.CheckState.Checked:
+            return 2
+
 
     def setName(self, val):
         self.name = val
@@ -93,7 +180,7 @@ class Trigger(QTreeWidgetItem):
         self.search_text = val
 
     def setDuration(self, val):
-        self.duration = int(val)
+        self.duration = float(val)
 
     def setUseRegex(self, val):
         self.use_regex = val
@@ -128,9 +215,22 @@ class Trigger(QTreeWidgetItem):
     def setSoundFilePath(self, val):
         self.sound_file_path = val
 
+    def setUseWebhook(self, val):
+        self.use_webhook = val
+
+    def setWebhookId(self, val):
+        self.webhook_id = val
+
+    def setWebhookMessage(self, val):
+        self.webhook_message = val
+
+    def setCooldownDuration(self, val):
+        self.cooldown_duration = float(val)
+
     def serialize(self):
         hash = {
             "type": "Trigger",
+            "trigger_id": self.trigger_id,
             "name": self.name,
             "timer_name": self.timer_name,
             "search_text": self.search_text,
@@ -165,17 +265,28 @@ class Trigger(QTreeWidgetItem):
             "timer_ended_interrupt_speech": self.timer_ended_interrupt_speech,
             "timer_ended_play_sound_file": self.timer_ended_play_sound_file,
             "timer_ended_sound_file_path": self.timer_ended_sound_file_path,
-            "timer_end_early_triggers": self.timer_end_early_triggers
+            "timer_end_early_triggers": self.timer_end_early_triggers,
+            "variables": self.variables,
+            "counter_duration": self.counter_duration,
+            "reset_counter_if_unmatched": self.reset_counter_if_unmatched,
+            "cooldown_duration": self.cooldown_duration,
+            "use_webhook": self.use_webhook,
+            "webhook_id": self.webhook_id,
+            "webhook_message": self.webhook_message,
+            "checked": self.checkStateToInt(self.checkState(0))
         }
         return hash
 
     def compileExpressions(self):
         self.regex_engine_enders = []
+        self.regex_variables = []
+        self.regex_engine_enders.clear()
+        self.regex_variables.clear()
+        
         search_text = self.search_text
 
         if not self.use_regex:
             search_text = search_text.replace("*", "\w+")
-
         try:
             self.regex_engine.compile(search_text)
         except Exception as e:
@@ -183,7 +294,7 @@ class Trigger(QTreeWidgetItem):
             print(self.search_text)
 
         for trigger in self.timer_end_early_triggers:
-            regex_engine = RegexEngine(self)
+            regex_engine = RegexEngine()
             text = trigger["text"]
             if len(text) > 0:
                 if not trigger["use_regex"]:
@@ -191,25 +302,69 @@ class Trigger(QTreeWidgetItem):
                 regex_engine.compile(text)
                 self.regex_engine_enders.append(regex_engine)
 
-    def onLogUpdate(self, text):
-        # Strip out the timestamp
-        stripped_str = re.sub("^\[.*?\] ", "", text)
+        for variable in self.variables:
+            regex_engine = RegexEngine()
+            text = variable["search"]
+            if len(text) > 0:
+                text = text.replace("*", "\w+")
+                regex_engine.compile(text)
+                item = {
+                  "regex_engine": regex_engine,
+                  "variable": variable
+                }
+                self.regex_variables.append(item)
 
-        # Remove whitespace
-        stripped_str = stripped_str.strip()
+    def onLogUpdate(self, timestamp, text):
+        for item in self.regex_variables:
+            engine = item["regex_engine"]
+            var = item["variable"]
+
+            var_matches = engine.match(text)
+            if var_matches:
+                result = engine.execute(var["value"], matches=var_matches)
+                if result:
+                    self.variable_values[var["name"]] = result
 
         if len(self.timers) > 0:
             for ender in self.regex_engine_enders:
-                m = ender.match(stripped_str)
+                m = ender.match(text)
                 if m:
                     for timer in self.timers.copy():
                         timer.destroy()
 
-        if self.owner and self.regex_engine.expression and self.parent() and self.parent().isChecked():
-            m = self.regex_engine.match(stripped_str)
+        if self.owner and self.regex_engine.expression and self.is_checked:
+            m = self.regex_engine.match(text)
+
+            now = time.time()
+
+            if self.last_matched_at and now > self.last_matched_at + int(self.counter_duration):
+                self.counter = 0
+
             if m:
+                self.last_matched_at = now
+
+                # Check cooldown - if cooldown is active, ignore this trigger
+                if self.cooldown_duration > 0 and self.last_fired_at:
+                    time_since_last_fire = now - self.last_fired_at
+                    if time_since_last_fire < self.cooldown_duration:
+                        # Cooldown is still active, ignore this trigger
+                        return
+
+                # Update last fired timestamp
+                self.last_fired_at = now
+
                 name = self.timer_name
                 name = self.regex_engine.execute(name, matches=m)
+
+                # Replace counter
+                self.counter += 1
+
+                if name:
+                    name = name.replace("{COUNTER}", str(self.counter))
+                    name = name.replace("{counter}", str(self.counter))
+
+                for key, value in self.variable_values.items():
+                    name = name.replace(f"{{var:{key}}}", str(value))
 
                 if self.interrupt_speech:
                     self.speaker.stop()
@@ -223,6 +378,10 @@ class Trigger(QTreeWidgetItem):
                 if self.play_sound_file and len(self.sound_file_path) > 0:
                     path = self.sound_file_path
                     playsound(path, False)
+
+                # Execute webhook if enabled
+                if self.use_webhook and self.webhook_id:
+                    self._execute_webhook(m)
 
                 categories = self.category_list.findItems(self.category, Qt.MatchExactly)
                 for category in categories:
@@ -245,15 +404,63 @@ class Trigger(QTreeWidgetItem):
                                         add_timer = False
 
                                 if add_timer:
-                                    timer = overlay.addTimer(name, self.duration, trigger=self, category=category, matches=m)
-                                    self.trigger_log_manager.addItem(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), name, stripped_str)
+                                    duration = self.duration
+                                    if self.regex_engine.duration != None:
+                                        duration = self.regex_engine.duration
+
+                                    timer = overlay.addTimer(name, duration, trigger=self, category=category, matches=m)
+                                    self.trigger_log_manager.addItem(timestamp.strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
+                                    QApplication.instance()._signals['timers'].append(timer)
                                     self.timers.append(timer)
 
                     for overlay in self.text_overlays:
                         if overlay.data_model.name == category.text_overlay:
                             if self.use_text:
-                                overlay.addTextTrigger(self.regex_engine.execute(self.display_text, matches=m), category=category, matches=m)
-                                self.trigger_log_manager.addItem(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), name, stripped_str)
+                                display_text = self.display_text
+                                for key, value in self.variable_values.items():
+                                    display_text = display_text.replace(f"{{var:{key}}}", str(value))
+
+                                overlay.addTextTrigger(self.regex_engine.execute(display_text, matches=m), category=category, matches=m)
+                                self.trigger_log_manager.addItem(timestamp.strftime("%Y-%m-%d %I:%M:%S %p"), self.getFullTriggerName(), text)
+
+    def _execute_webhook(self, matches):
+        """Execute webhook with variable substitution"""
+        try:
+            # Get webhooks manager
+            webhooks_manager = self.owner._parent.webhooks_manager
+
+            # Get the webhook by ID
+            webhook = webhooks_manager.getWebhookById(self.webhook_id)
+
+            if not webhook:
+                print(f"Webhook with ID {self.webhook_id} not found")
+                return
+
+            # Process the message with variable substitution
+            message = self.webhook_message
+
+            # Use regex engine to substitute variables like {S}, {C}, {1}, {2}, etc.
+            message = self.regex_engine.execute(message, matches=matches)
+
+            # Replace counter variables
+            if message:
+                message = message.replace("{COUNTER}", str(self.counter))
+                message = message.replace("{counter}", str(self.counter))
+
+                # Replace custom variables
+                for key, value in self.variable_values.items():
+                    message = message.replace(f"{{var:{key}}}", str(value))
+
+            # Send the webhook
+            from volt.utils.webhook_executor import WebhookExecutor
+            WebhookExecutor.send_webhook(webhook, message, async_mode=True)
+
+        except Exception as e:
+            print(f"Error executing webhook: {str(e)}")
 
     def removeTimer(self, timer):
+        QApplication.instance()._signals['timers'].remove(timer)
         self.timers.remove(timer)
+
+    def getTimers(self):
+        return self.timers

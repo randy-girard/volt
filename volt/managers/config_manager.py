@@ -1,10 +1,12 @@
-import json
+#import json
+import ujson as json
 import sys
 import os
 import xml.etree.ElementTree as ET
 
-from PySide6.QtWidgets import QWidget, QFileDialog
+from PySide6.QtWidgets import QApplication, QWidget, QFileDialog
 
+from volt.utils.helpers import resource_path
 from volt.models.trigger_group import TriggerGroup
 from volt.models.trigger import Trigger
 from volt.models.category import Category
@@ -15,6 +17,13 @@ class ConfigManager(QWidget):
         super(ConfigManager, self).__init__()
 
         self._parent = parent
+        QApplication.instance().config_manager = self
+
+    def toggleMap(self):
+        QApplication.instance()._map.toggle()
+
+    def toggleDps(self):
+        QApplication.instance()._dps.toggle()
 
     def save(self):
         config = {
@@ -25,22 +34,23 @@ class ConfigManager(QWidget):
             "profiles": self._parent.profiles_manager.serialize(),
             "overlays": self._parent.overlays_manager.serialize(),
             "trigger_groups": self._parent.triggers_manager.serialize(),
-            "categories": self._parent.categories_manager.serialize()
+            "categories": self._parent.categories_manager.serialize(),
+            "webhooks": self._parent.webhooks_manager.serialize()
         }
 
         json_out = json.dumps(config, indent=4)
-        with open(self._parent.application_path + "/config.json", "w") as outfile:
+        with open(resource_path("data/config.json"), "w") as outfile:
             outfile.write(json_out)
 
 
     def load(self):
-        if not os.path.isfile(self._parent.application_path + "/config.json"):
+        if not os.path.isfile(resource_path("data/config.json")):
             json_out = json.dumps({}, indent=4)
-            with open(self._parent.application_path + "/config.json", "w") as outfile:
+            with open(resource_path("data/config.json"), "w") as outfile:
                 outfile.write(json_out)
 
 
-        with open(self._parent.application_path + "/config.json", 'r') as openfile:
+        with open(resource_path("data/config.json"), 'r') as openfile:
             json_object = json.load(openfile)
 
             self.setGeometry(json_object.get("left", 10),
@@ -98,7 +108,7 @@ class ConfigManager(QWidget):
                                            "use_regex": True
                                        }
                                    ])
-                    self._parent.log_signal.connect(node.onLogUpdate)
+                    #QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
                     root.addChild(node)
 
 
@@ -114,7 +124,7 @@ class ConfigManager(QWidget):
             tree = ET.parse(filename)
             root = tree.getroot()
 
-            self._parent.overlays_manager.clearOverlayWindows()
+            #self._parent.overlays_manager.clearOverlayWindows()
             for item in root.findall("./BehaviorGroups/Behavior"):
                 window = item.find("./WindowLayout/WINDOWPLACEMENT/normalPosition")
                 sort_method = item.find("SortMethod").text
@@ -138,20 +148,20 @@ class ConfigManager(QWidget):
                 }
                 self._parent.overlays_manager.createOverlay(config)
 
-            self._parent.profiles_manager.profile_list.clear()
+            #self._parent.profiles_manager.profile_list.clear()
             for item in root.findall('./Characters/Character'):
                 trigger_group_ids = [int(child.get("GroupId")) for child in item.findall("./TriggerGroups/TriggerGroup")]
                 profile = Profile(name=item.find("DisplayName").text,
                                   log_file=item.find("LogFilePath").text,
-                                  trigger_group_ids=trigger_group_ids)
+                                  trigger_ids=[])
                 self._parent.profiles_manager.profile_list.addItem(profile)
 
-            self._parent.triggers_manager.trigger_list.clear()
+            #self._parent.triggers_manager.trigger_list.clear()
             for item in root.findall('./TriggerGroups/TriggerGroup'):
                 root_item = self.importGinaConfigNested(item)
                 self._parent.triggers_manager.trigger_list.addTopLevelItem(root_item)
 
-            self._parent.categories_manager.category_list.clear()
+            #self._parent.categories_manager.category_list.clear()
             for item in root.findall('./Categories/Category'):
                 category = Category(name=item.find("Name").text,
                                     timer_overlay=item.find("TimerOverlay").text,
@@ -162,11 +172,12 @@ class ConfigManager(QWidget):
                 self._parent.categories_manager.category_list.addItem(category)
 
 
-    def importGinaConfigNested(self, item):
+    def importGinaConfigNested(self, item, parent=None):
         node = None
         if item.tag == "TriggerGroup":
             node = TriggerGroup(group_id=int(item.find("GroupId").text),
                                 name=item.find("Name").text,
+                                parent=parent,
                                 comments=item.find("Comments").text)
         elif item.tag == "Trigger":
            timer_type = item.find("TimerType").text
@@ -255,9 +266,12 @@ class ConfigManager(QWidget):
                end_early_triggers.append(record)
            node.timer_end_early_triggers = end_early_triggers
 
-           self._parent.log_signal.connect(node.onLogUpdate)
+           node.reset_counter_if_unmatched = bool(item.find("UseCounterResetTimer").text == "True")
+           node.counter_duration = int(item.find("CounterResetDuration").text)
+
+           #QApplication.instance()._signals["logreader"].new_line.connect(node.onLogUpdate)
         for child in item.findall("./TriggerGroups/TriggerGroup"):
-            node.addChild(self.importGinaConfigNested(child))
+            node.addChild(self.importGinaConfigNested(child, node))
         for child in item.findall("./Triggers/Trigger"):
-            node.addChild(self.importGinaConfigNested(child))
+            node.addChild(self.importGinaConfigNested(child, node))
         return node

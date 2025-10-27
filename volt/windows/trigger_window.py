@@ -1,7 +1,7 @@
 import re
 import sys
 
-from PySide6.QtWidgets import QWidget, QGridLayout, QLineEdit, QCheckBox, QLabel, QComboBox, QTabWidget, QHBoxLayout, QPushButton, QVBoxLayout, QGroupBox, QRadioButton, QFileDialog, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView
+from PySide6.QtWidgets import QApplication, QWidget, QGridLayout, QLineEdit, QCheckBox, QLabel, QComboBox, QTabWidget, QHBoxLayout, QPushButton, QVBoxLayout, QGroupBox, QRadioButton, QFileDialog, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel, QKeyEvent
 
@@ -95,6 +95,9 @@ class TriggerWindow(QWidget):
         self.tabs.addTab(self.buildTimerTab(), "Timer")
         self.tabs.addTab(self.buildTimerEndingTab(), "Timer Ending")
         self.tabs.addTab(self.buildTimerEndedTab(), "Timer Ended")
+        self.tabs.addTab(self.buildCounterTab(), "Counter")
+        self.tabs.addTab(self.buildVariableTab(), "Variables")
+        self.tabs.addTab(self.buildWebhookTab(), "Webhook")
 
         self.layout.addWidget(self.tabs, 4, 0, 1, 2)
         self.layout.addLayout(self.button_layout, 5, 0, 1, 2, alignment=Qt.AlignmentFlag.AlignRight)
@@ -127,7 +130,7 @@ class TriggerWindow(QWidget):
         text_to_say_label = QLabel("Text to Say")
         self.text_to_voice_text = QLineEdit()
         self.text_to_voice_text.setText(self._trigger.text_to_voice_text)
-        self.interrupt_speech = QCheckBox("Interrupt Speed")
+        self.interrupt_speech = QCheckBox("Interrupt Speech")
         self.interrupt_speech.setChecked(self._trigger.interrupt_speech)
 
         self.play_sound_file = QRadioButton("Play Sound File")
@@ -149,6 +152,56 @@ class TriggerWindow(QWidget):
         audio_settings_layout.addWidget(self.sound_file_finder, 5, 3)
         box2.setLayout(audio_settings_layout)
         layout.addWidget(box2)
+
+        # Cooldown Settings
+        box3 = QGroupBox("Cooldown Settings")
+        cooldown_help = QLabel("Prevent trigger from firing again for the specified duration after it fires")
+        cooldown_help.setStyleSheet("color: gray; font-style: italic; font-size: 10px;")
+
+        # Calculate hours, minutes, seconds from cooldown_duration
+        cooldown_seconds = self._trigger.cooldown_duration % (24 * 3600)
+        cooldown_hours = cooldown_seconds // 3600
+        cooldown_seconds %= 3600
+        cooldown_minutes = cooldown_seconds // 60
+        cooldown_seconds %= 60
+
+        cooldown_layout = QGridLayout()
+        cooldown_layout.addWidget(cooldown_help, 0, 0, 1, 4)
+
+        cooldown_duration_layout = QHBoxLayout()
+        cooldown_duration_layout.setAlignment(Qt.AlignLeft)
+
+        self.cooldown_h_input = QLineEdit(self)
+        self.cooldown_h_input.setText(str(int(cooldown_hours)))
+        self.cooldown_h_input.setFixedWidth(40)
+        cooldown_h_label = QLabel("h")
+        cooldown_h_label.setFixedWidth(15)
+
+        self.cooldown_m_input = QLineEdit(self)
+        self.cooldown_m_input.setText(str(int(cooldown_minutes)))
+        self.cooldown_m_input.setFixedWidth(40)
+        cooldown_m_label = QLabel("m")
+        cooldown_m_label.setFixedWidth(15)
+
+        self.cooldown_s_input = QLineEdit(self)
+        self.cooldown_s_input.setText(str(int(cooldown_seconds)))
+        self.cooldown_s_input.setFixedWidth(40)
+        cooldown_s_label = QLabel("s")
+        cooldown_s_label.setFixedWidth(15)
+
+        cooldown_duration_layout.addWidget(QLabel("Cooldown Duration:"))
+        cooldown_duration_layout.addWidget(self.cooldown_h_input)
+        cooldown_duration_layout.addWidget(cooldown_h_label)
+        cooldown_duration_layout.addWidget(self.cooldown_m_input)
+        cooldown_duration_layout.addWidget(cooldown_m_label)
+        cooldown_duration_layout.addWidget(self.cooldown_s_input)
+        cooldown_duration_layout.addWidget(cooldown_s_label)
+        cooldown_duration_layout.addStretch()
+
+        cooldown_layout.addLayout(cooldown_duration_layout, 1, 0, 1, 4)
+
+        box3.setLayout(cooldown_layout)
+        layout.addWidget(box3)
 
         self.basic_tab.setLayout(layout)
 
@@ -178,29 +231,30 @@ class TriggerWindow(QWidget):
         seconds %= 3600
         minutes = seconds // 60
         seconds %= 60
+        milliseconds = (seconds - int(seconds)) * 1000
 
         duration_layout = QHBoxLayout()
         duration_layout.setAlignment(Qt.AlignLeft)
         self.duration_h_input = QLineEdit(self)
-        self.duration_h_input.setText(str(hours))
+        self.duration_h_input.setText(str(int(hours)))
         self.duration_h_input.setFixedWidth(25)
         self.duration_h_label = QLabel("h")
         self.duration_h_label.setFixedWidth(15)
 
         self.duration_m_input = QLineEdit(self)
-        self.duration_m_input.setText(str(minutes))
+        self.duration_m_input.setText(str(int(minutes)))
         self.duration_m_input.setFixedWidth(25)
         self.duration_m_label = QLabel("m")
         self.duration_m_label.setFixedWidth(15)
 
         self.duration_s_input = QLineEdit(self)
-        self.duration_s_input.setText(str(seconds))
+        self.duration_s_input.setText(str(int(seconds)))
         self.duration_s_input.setFixedWidth(25)
         self.duration_s_label = QLabel("s")
         self.duration_s_label.setFixedWidth(15)
 
         self.duration_ms_input = QLineEdit(self)
-        self.duration_ms_input.setText("0")
+        self.duration_ms_input.setText(str(int(milliseconds)))
         self.duration_ms_input.setFixedWidth(25)
         self.duration_ms_label = QLabel("ms")
         self.duration_ms_label.setFixedWidth(15)
@@ -344,7 +398,7 @@ class TriggerWindow(QWidget):
         text_to_say_label = QLabel("Text to Say")
         self.timer_ending_text_to_voice_text = QLineEdit()
         self.timer_ending_text_to_voice_text.setText(self._trigger.timer_ending_text_to_voice_text)
-        self.timer_ending_interrupt_speech = QCheckBox("Interrupt Speed")
+        self.timer_ending_interrupt_speech = QCheckBox("Interrupt Speech")
         self.timer_ending_interrupt_speech.setChecked(self._trigger.timer_ending_interrupt_speech)
 
         self.timer_ending_play_sound_file = QRadioButton("Play Sound File")
@@ -400,7 +454,7 @@ class TriggerWindow(QWidget):
         text_to_say_label = QLabel("Text to Say")
         self.timer_ended_text_to_voice_text = QLineEdit()
         self.timer_ended_text_to_voice_text.setText(self._trigger.timer_ended_text_to_voice_text)
-        self.timer_ended_interrupt_speech = QCheckBox("Interrupt Speed")
+        self.timer_ended_interrupt_speech = QCheckBox("Interrupt Speech")
         self.timer_ended_interrupt_speech.setChecked(self._trigger.timer_ended_interrupt_speech)
 
         self.timer_ended_play_sound_file = QRadioButton("Play Sound File")
@@ -427,6 +481,184 @@ class TriggerWindow(QWidget):
 
         return self.timer_ended_tab
 
+    def buildCounterTab(self):
+        self.counter_tab = QWidget()
+
+        layout = QGridLayout()
+        layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+
+        seconds = self._trigger.counter_duration % (24 * 3600)
+        hours = seconds // 3600
+        seconds %= 3600
+        minutes = seconds // 60
+        seconds %= 60
+
+
+        self.reset_counter = QCheckBox("Reset counter if unmatched for")
+        self.reset_counter.setChecked(self._trigger.reset_counter_if_unmatched)
+        layout.addWidget(self.reset_counter, 0, 0)
+
+        self.counter_duration_h_input = QLineEdit(self)
+        self.counter_duration_h_input.setText(str(hours))
+        self.counter_duration_h_input.setFixedWidth(25)
+        self.counter_duration_h_label = QLabel("h")
+        self.counter_duration_h_label.setFixedWidth(15)
+
+        self.counter_duration_m_input = QLineEdit(self)
+        self.counter_duration_m_input.setText(str(minutes))
+        self.counter_duration_m_input.setFixedWidth(25)
+        self.counter_duration_m_label = QLabel("m")
+        self.counter_duration_m_label.setFixedWidth(15)
+
+        self.counter_duration_s_input = QLineEdit(self)
+        self.counter_duration_s_input.setText(str(seconds))
+        self.counter_duration_s_input.setFixedWidth(25)
+        self.counter_duration_s_label = QLabel("s")
+        self.counter_duration_s_label.setFixedWidth(15)
+
+        layout.addWidget(self.counter_duration_h_input, 0, 1)
+        layout.addWidget(self.counter_duration_h_label, 0, 2)
+        layout.addWidget(self.counter_duration_m_input, 0, 3)
+        layout.addWidget(self.counter_duration_m_label, 0, 4)
+        layout.addWidget(self.counter_duration_s_input, 0, 5)
+        layout.addWidget(self.counter_duration_s_label, 0, 6)
+
+        self.counter_tab.setLayout(layout)
+
+        return self.counter_tab
+
+    def buildVariableTab(self):
+        self.variable_tab = QWidget()
+        layout = QGridLayout()
+        layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+
+        self.variables = TriggerEndEarlyTable(0, 3)
+        self.variables.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.variables.verticalHeader().setVisible(False)
+        self.variables.setSelectionBehavior(QAbstractItemView.SelectRows);
+        header = self.variables.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.variables.setHorizontalHeaderLabels(["Variable Name", "Search Text", "Value"]);
+
+        if len(self._trigger.variables) > 0:
+            idx = 0
+            for variable in self._trigger.variables:
+                self.variables.insertRow(self.variables.rowCount())
+                item = QTableWidgetItem();
+                item.setFlags(item.flags() | Qt.ItemIsEditable);
+                item.setData(Qt.DisplayRole, variable["name"]);
+                self.variables.setItem(idx, 0, item);
+                item2 = QTableWidgetItem();
+                item2.setFlags(item2.flags() | Qt.ItemIsEditable);
+                item2.setData(Qt.DisplayRole, variable["search"]);
+                self.variables.setItem(idx, 1, item2);
+                item3 = QTableWidgetItem();
+                item3.setFlags(item3.flags() | Qt.ItemIsEditable);
+                item3.setData(Qt.DisplayRole, variable["value"]);
+                self.variables.setItem(idx, 2, item3);
+                idx += 1
+        else:
+            self.variables.insertRow(self.variables.rowCount())
+            item = QTableWidgetItem();
+            item.setFlags(item.flags() | Qt.ItemIsEditable);
+            item.setData(Qt.DisplayRole, "");
+            self.variables.setItem(0, 0, item);
+            item2 = QTableWidgetItem();
+            item2.setFlags(item2.flags() | Qt.ItemIsEditable);
+            item2.setData(Qt.DisplayRole, "");
+            self.variables.setItem(0, 1, item2);
+            item3 = QTableWidgetItem();
+            item3.setFlags(item3.flags() | Qt.ItemIsEditable);
+            item3.setData(Qt.DisplayRole, "");
+            self.variables.setItem(0, 2, item3);
+
+        self.variables.resizeRowsToContents()
+
+        layout.addWidget(self.variables)
+
+        self.variable_tab.setLayout(layout)
+
+        return self.variable_tab
+
+    def buildWebhookTab(self):
+        self.webhook_tab = QWidget()
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+
+        # Webhook enable checkbox
+        self.use_webhook = QCheckBox("Enable Webhook")
+        self.use_webhook.setChecked(self._trigger.use_webhook)
+        # self.use_webhook.stateChanged.connect(self.onWebhookEnabledChanged)
+        layout.addWidget(self.use_webhook)
+
+        # Webhook selection
+        webhook_select_layout = QHBoxLayout()
+        webhook_select_label = QLabel("Webhook:")
+        self.webhook_select = QComboBox()
+
+        # Populate webhook dropdown
+        webhooks_manager = self._parent._parent._parent.webhooks_manager
+        self.webhook_select.addItem("-- Select Webhook --", None)
+        for i in range(webhooks_manager.webhook_list.count()):
+            webhook = webhooks_manager.webhook_list.item(i)
+            self.webhook_select.addItem(webhook.name, webhook.webhook_id)
+
+        # Set current webhook if one is selected
+        if self._trigger.webhook_id:
+            index = self.webhook_select.findData(self._trigger.webhook_id)
+            if index >= 0:
+                self.webhook_select.setCurrentIndex(index)
+
+        webhook_select_layout.addWidget(webhook_select_label)
+        webhook_select_layout.addWidget(self.webhook_select)
+        layout.addLayout(webhook_select_layout)
+
+        # Webhook message
+        message_label = QLabel("Message Template:")
+        message_help = QLabel("Use variables like {S}, {C}, {1}, {2}, etc. for dynamic content")
+        message_help.setStyleSheet("color: gray; font-style: italic; font-size: 10px;")
+
+        self.webhook_message = QLineEdit()
+        self.webhook_message.setText(self._trigger.webhook_message)
+        self.webhook_message.setPlaceholderText("e.g., Killed: {S}")
+
+        layout.addWidget(message_label)
+        layout.addWidget(message_help)
+        layout.addWidget(self.webhook_message)
+
+        # Example section
+        example_group = QGroupBox("Examples")
+        example_layout = QVBoxLayout()
+        example_text = QLabel(
+            "• Simple message: \"Alert triggered!\"\n"
+            "• With mob name: \"You killed {S}\"\n"
+            "• With character: \"{C} killed {S}\"\n"
+            "• With regex groups: \"Player {1} says {2}\"\n"
+            "• With variables: \"HP at {var:current_hp}\""
+        )
+        example_text.setWordWrap(True)
+        example_layout.addWidget(example_text)
+        example_group.setLayout(example_layout)
+        layout.addWidget(example_group)
+
+        # Add stretch to push everything to the top
+        layout.addStretch()
+
+        self.webhook_tab.setLayout(layout)
+
+        # Initialize enabled state
+        #self.onWebhookEnabledChanged(self.use_webhook.checkState())
+
+        return self.webhook_tab
+
+    def onWebhookEnabledChanged(self, state):
+        """Enable/disable webhook fields based on checkbox"""
+        enabled = (state == Qt.Checked)
+        self.webhook_select.setEnabled(enabled)
+        self.webhook_message.setEnabled(enabled)
 
     def saveTrigger(self):
         self._trigger.setName(self.trigger_input.text())
@@ -454,6 +686,7 @@ class TriggerWindow(QWidget):
         duration = int(self.duration_h_input.text() or 0) * 60 * 60
         duration += int(self.duration_m_input.text() or 0) * 60
         duration += int(self.duration_s_input.text() or 0)
+        duration += float(self.duration_ms_input.text() or 0) / 1000
         self._trigger.setDuration(duration)
 
         timer_ending_duration = int(self.timer_ending_duration_h_input.text() or 0) * 60 * 60
@@ -478,6 +711,18 @@ class TriggerWindow(QWidget):
         self._trigger.timer_ended_play_sound_file = self.timer_ended_play_sound_file.isChecked()
         self._trigger.timer_ended_sound_file_path = self.timer_ended_sound_file_path.text()
 
+        counter_duration = int(self.counter_duration_h_input.text() or 0) * 60 * 60
+        counter_duration += int(self.counter_duration_m_input.text() or 0) * 60
+        counter_duration += int(self.counter_duration_s_input.text() or 0)
+        self._trigger.reset_counter_if_unmatched = self.reset_counter.isChecked()
+        self._trigger.counter_duration = counter_duration
+
+        # Save cooldown duration
+        cooldown_duration = int(self.cooldown_h_input.text() or 0) * 60 * 60
+        cooldown_duration += int(self.cooldown_m_input.text() or 0) * 60
+        cooldown_duration += int(self.cooldown_s_input.text() or 0)
+        self._trigger.setCooldownDuration(cooldown_duration)
+
         self._trigger.timer_end_early_triggers = []
         for row in range(self.end_early_triggers.rowCount()):
             text = self.end_early_triggers.item(row, 0).text()
@@ -488,16 +733,31 @@ class TriggerWindow(QWidget):
             }
             self._trigger.timer_end_early_triggers.append(item)
 
+        self._trigger.variables = []
+        for row in range(self.variables.rowCount()):
+            name = self.variables.item(row, 0).text()
+            search =  self.variables.item(row, 1).text()
+            value = self.variables.item(row, 2).text()
+            item = {
+              "name": name,
+              "search": search,
+              "value": value
+            }
+            self._trigger.variables.append(item)
+
+        # Save webhook settings
+        self._trigger.setUseWebhook(self.use_webhook.isChecked())
+        self._trigger.setWebhookId(self.webhook_select.currentData())
+        self._trigger.setWebhookMessage(self.webhook_message.text())
 
         if self._is_new:
             if self._trigger_group:
                 self._trigger_group.addChild(self._trigger)
             else:
                 self._parent.trigger_list.addTopLevelItem(self._trigger)
-            self._parent._parent._parent.log_signal.connect(self._trigger.onLogUpdate)
 
         self._trigger.compileExpressions()
-
+        QApplication.instance().save()
         self.destroy()
 
     def cancelTrigger(self):

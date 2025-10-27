@@ -2,7 +2,7 @@ import sys
 
 from functools import partial
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QToolBar, QToolButton, QMenu
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QToolBar, QToolButton, QMenu
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel, QAction, QFont
 
@@ -103,6 +103,7 @@ class OverlaysManager(QWidget):
             overlay.setButton(button)
             self.overlay_text_layout.addWidget(button)
             self.text_overlays.append(overlay)
+            QApplication.instance().save()
 
 
     def saveOverlayWindow(self, overlay):
@@ -126,12 +127,15 @@ class OverlaysManager(QWidget):
             idx = self._parent.categories_manager.category_text_overlays.findText(old_name)
             self._parent.categories_manager.category_text_overlays.setItemText(idx, overlay.overlay_name_input.text())
         overlay.toggleShow()
+        QApplication.instance().save()
 
 
     def sortTriggers(self, overlay):
+        reverse = overlay.data_model.sort_method.endswith("(Desc)")
+
         for trigger in overlay.triggers:
             trigger.removeFromLayout()
-        for trigger in sorted(overlay.triggers, key=lambda x: x.sortValue()):
+        for trigger in sorted(overlay.triggers, key=lambda x: x.sortValue(), reverse=reverse):
             trigger.addToLayout()
 
 
@@ -148,6 +152,7 @@ class OverlaysManager(QWidget):
             self.text_overlays.remove(overlay)
         overlay.button.deleteLater()
         overlay.destroy()
+        QApplication.instance().save()
 
     def clearOverlayWindows(self):
         for overlay in self.timer_overlays.copy():
@@ -155,12 +160,25 @@ class OverlaysManager(QWidget):
         for overlay in self.text_overlays.copy():
             self.destroyOverlayWindow(overlay)
 
+    def hideAllOverlayWindows(self):
+        for overlay in self.timer_overlays.copy():
+            overlay.hide();
+        for overlay in self.text_overlays.copy():
+            overlay.hide();
+
+    def showAllOverlayWindows(self):
+        for overlay in self.timer_overlays.copy():
+            overlay.show();
+        for overlay in self.text_overlays.copy():
+            overlay.show();
+
     def onRecentWindowClick(self, overlay):
         overlay.setTransparency(False)
         center = self._parent.screen().availableGeometry().center()
         geo = overlay.frameGeometry()
         geo.moveCenter(center)
         overlay.move(geo.topLeft())
+        QApplication.instance().save()
 
 
     def destroy(self):

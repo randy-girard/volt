@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QGridLayout, QLineEdit, QLabel, QTextEdit, QPushButton
+from PySide6.QtWidgets import QApplication, QWidget, QGridLayout, QLineEdit, QLabel, QTextEdit, QPushButton
 from PySide6.QtCore import Signal, Slot, Qt
 from PySide6.QtGui import QStandardItemModel
 
@@ -59,7 +59,7 @@ class TriggerGroupWindow(QWidget):
         else:
             self._parent_group.addChild(self._trigger_group)
 
-
+        QApplication.instance().save()
         self.destroy()
 
     def cancelTriggerGroup(self):
